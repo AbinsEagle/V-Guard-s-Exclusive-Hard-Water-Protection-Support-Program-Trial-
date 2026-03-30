@@ -4,33 +4,44 @@ import {
   ViewStyle,
   ActivityIndicator,
   View,
+  Platform,
 } from 'react-native';
 import { AppText } from './AppText';
-import { colors, spacing } from '../../theme';
+import { colors, radius, shadows, spacing } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant = 'primary' | 'secondary' | 'tinted' | 'ghost' | 'destructive';
+type ButtonSize    = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
-  label: string;
-  onPress: () => void;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+  label:      string;
+  onPress:    () => void;
+  variant?:   ButtonVariant;
+  size?:      ButtonSize;
   isLoading?: boolean;
-  disabled?: boolean;
-  style?: ViewStyle;
+  disabled?:  boolean;
+  style?:     ViewStyle;
   fullWidth?: boolean;
+  icon?:      React.ReactNode;
 }
+
+const TEXT_COLOR: Record<ButtonVariant, string> = {
+  primary:     colors.white,
+  secondary:   colors.primary,
+  tinted:      colors.primary,
+  ghost:       colors.primary,
+  destructive: colors.white,
+};
 
 export function Button({
   label,
   onPress,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  disabled = false,
+  variant    = 'primary',
+  size       = 'md',
+  isLoading  = false,
+  disabled   = false,
   style,
-  fullWidth = false,
+  fullWidth  = false,
+  icon,
 }: ButtonProps) {
   const isDisabled = disabled || isLoading;
 
@@ -39,27 +50,30 @@ export function Button({
       style={[
         styles.base,
         styles[variant],
-        styles[size],
-        fullWidth && styles.fullWidth,
+        styles[`size_${size}`],
+        fullWidth  && styles.fullWidth,
         isDisabled && styles.disabled,
         style,
       ]}
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.8}
+      activeOpacity={0.75}
     >
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? colors.white : colors.primary}
+          color={variant === 'primary' || variant === 'destructive' ? colors.white : colors.primary}
         />
       ) : (
-        <AppText
-          variant="label"
-          color={variant === 'primary' ? colors.white : colors.primary}
-        >
-          {label}
-        </AppText>
+        <View style={styles.inner}>
+          {icon && <View style={styles.iconSlot}>{icon}</View>}
+          <AppText
+            variant={size === 'sm' ? 'subhead' : 'label'}
+            color={TEXT_COLOR[variant]}
+          >
+            {label}
+          </AppText>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -67,44 +81,53 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
+    alignItems:      'center',
+    justifyContent:  'center',
+    borderRadius:    radius.pill,
   },
+  inner: {
+    flexDirection:  'row',
+    alignItems:     'center',
+  },
+  iconSlot: {
+    marginRight: spacing.xs,
+  },
+
   // Variants
   primary: {
     backgroundColor: colors.primary,
+    ...shadows.sm,
   },
   secondary: {
-    backgroundColor: colors.primaryFaint,
+    backgroundColor: colors.fillTertiary,
   },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+  tinted: {
+    backgroundColor: colors.primaryFaint,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
-  // Sizes
-  sm: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+  destructive: {
+    backgroundColor: colors.error,
   },
-  md: {
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
+
+  // Sizes — follow Apple's recommended touch-target heights
+  size_sm: {
+    paddingVertical:   8,
+    paddingHorizontal: 16,
+    minHeight:         34,
   },
-  lg: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
+  size_md: {
+    paddingVertical:   14,
+    paddingHorizontal: 24,
+    minHeight:         50,
   },
-  // States
-  fullWidth: {
-    width: '100%',
+  size_lg: {
+    paddingVertical:   17,
+    paddingHorizontal: 32,
+    minHeight:         56,
   },
-  disabled: {
-    opacity: 0.4,
-  },
+
+  fullWidth:  { width: '100%' },
+  disabled:   { opacity: 0.38 },
 });

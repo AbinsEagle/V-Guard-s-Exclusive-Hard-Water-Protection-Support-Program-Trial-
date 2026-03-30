@@ -1,39 +1,65 @@
+import { Platform } from 'react-native';
+
+// ─── V-Guard Brand ────────────────────────────────────────────────────────────
+// Blue stays V-Guard blue. Neutrals follow Apple's HIG system palette.
+
 export const colors = {
-  // V-Guard Brand
-  primary: '#0057A8',
-  primaryDark: '#003E7E',
-  primaryLight: '#4D8FCC',
-  primaryFaint: '#E8F2FC',
-  accent: '#F5A623',
-  accentDark: '#D4891A',
-  accentFaint: '#FEF3DC',
+  // Brand
+  primary:       '#0057A8',
+  primaryDark:   '#003E7E',
+  primaryLight:  '#4D8FCC',
+  primaryFaint:  '#E8F2FC',
+  accent:        '#F5A623',
+  accentDark:    '#D4891A',
+  accentFaint:   '#FEF3DC',
 
-  // Semantic
-  success: '#2E9E5B',
+  // Apple-style backgrounds (light mode)
+  background:       '#F2F2F7',   // iOS systemGroupedBackground
+  backgroundSecond: '#FFFFFF',   // iOS secondarySystemGroupedBackground
+  surface:          '#FFFFFF',
+  surfaceRaised:    '#FFFFFF',
+
+  // Apple-style fills
+  fillPrimary:   'rgba(120,120,128,0.20)',
+  fillSecondary: 'rgba(120,120,128,0.16)',
+  fillTertiary:  'rgba(118,118,128,0.12)',
+
+  // Apple-style separators
+  border:        'rgba(60,60,67,0.18)',  // iOS separator
+  borderOpaque:  '#C6C6C8',             // iOS opaqueSeparator
+
+  // Apple-style labels
+  textPrimary:   '#000000',
+  textSecondary: 'rgba(60,60,67,0.60)',
+  textTertiary:  'rgba(60,60,67,0.30)',
+  textHint:      'rgba(60,60,67,0.25)',
+
+  // Semantic (Apple HIG tints)
+  success:      '#34C759',
   successLight: '#D4F4E3',
-  warning: '#E6A817',
-  warningLight: '#FEF3D0',
-  error: '#D93025',
-  errorLight: '#FDDBD9',
-  info: '#0097A7',
-  infoLight: '#E0F7FA',
+  warning:      '#FF9F0A',
+  warningLight: '#FFF3D0',
+  error:        '#FF3B30',
+  errorLight:   '#FFDEDE',
+  info:         '#0057A8',   // use brand blue for info
+  infoLight:    '#E8F2FC',
 
-  // Neutrals
-  background: '#F5F7FA',
-  surface: '#FFFFFF',
-  border: '#E0E6EF',
-  borderDark: '#C5D0DF',
-  textPrimary: '#1A2340',
-  textSecondary: '#6B7A99',
-  textHint: '#A0ABBE',
+  // Misc
   white: '#FFFFFF',
   black: '#000000',
 
   // Water quality
-  waterSoft: '#2E9E5B',
-  waterModerate: '#E6A817',
-  waterHard: '#D93025',
+  waterSoft:     '#34C759',
+  waterModerate: '#FF9F0A',
+  waterHard:     '#FF3B30',
   waterVeryHard: '#8B1A10',
 } as const;
 
 export type ColorKey = keyof typeof colors;
+
+// ─── System font stack (SF Pro on Apple, Roboto on Android) ──────────────────
+export const fontFamily = Platform.select({
+  ios:     { fontFamily: '-apple-system' },
+  android: { fontFamily: 'Roboto' },
+  default: { fontFamily: 'System' },
+}) as { fontFamily: string };

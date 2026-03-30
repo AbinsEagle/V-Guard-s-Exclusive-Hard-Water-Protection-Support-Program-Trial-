@@ -6,26 +6,27 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../src/components/common/AppText';
 import { useInstallation } from '../src/store/installationStore';
-import { colors, spacing } from '../src/theme';
+import { colors, spacing, radius, shadows } from '../src/theme';
 
 export default function EntryScreen() {
   const { update } = useInstallation();
-  const [name, setName] = useState('');
+  const [name,  setName]  = useState('');
   const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState({ name: '', phone: '' });
 
   const validate = () => {
     const e = { name: '', phone: '' };
-    if (!name.trim()) e.name = 'Name is required';
+    if (!name.trim())  e.name  = 'Name is required';
     if (!phone.trim()) e.phone = 'Phone number is required';
-    else if (!/^[6-9]\d{9}$/.test(phone.trim())) e.phone = 'Enter a valid 10-digit mobile number';
+    else if (!/^[6-9]\d{9}$/.test(phone.trim()))
+      e.phone = 'Enter a valid 10-digit mobile number';
     setErrors(e);
     return !e.name && !e.phone;
   };
@@ -42,114 +43,157 @@ export default function EntryScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
 
-          {/* ── Header Banner ── */}
-          <View style={styles.banner}>
-            <AppText variant="caption" color={colors.white} style={styles.brandTag}>
-              V-GUARD INDUSTRIES
-            </AppText>
-            <AppText variant="h2" color={colors.white} style={styles.title}>
-              Exclusive Hard Water{'\n'}Protection Program
-            </AppText>
-            <View style={styles.trialBadge}>
-              <AppText variant="caption" color={colors.accentDark} style={styles.trialText}>
-                TRIAL RUN
+          {/* ── Hero / Large-title header ── */}
+          <View style={styles.hero}>
+            {/* Brand chip */}
+            <View style={styles.brandChip}>
+              <View style={styles.brandDot} />
+              <AppText variant="caption" color={colors.primary} style={styles.brandText}>
+                V-GUARD INDUSTRIES
               </AppText>
+            </View>
+
+            {/* Large title */}
+            <AppText variant="h1" style={styles.heroTitle}>
+              Hard Water{'\n'}Protection
+            </AppText>
+
+            {/* Accent subtitle */}
+            <View style={styles.subtitleRow}>
+              <View style={styles.accentLine} />
+              <AppText variant="subhead" color={colors.textSecondary} style={styles.heroSub}>
+                Exclusive Support Program
+              </AppText>
+              <View style={styles.trialPill}>
+                <AppText variant="caption2" color={colors.accentDark} style={styles.trialText}>
+                  TRIAL
+                </AppText>
+              </View>
             </View>
           </View>
 
-          {/* ── Program Description ── */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoDot} />
-              <AppText variant="body" style={styles.infoText}>
-                Scale formation depends on local water chemistry and usage patterns. V-Guard's internal testing under extreme laboratory conditions showed a strong reduction in scale impact in very hard water. However, real homes and water conditions vary.
+          {/* ── Program description card ── */}
+          <View style={styles.section}>
+            <View style={styles.infoCard}>
+              <View style={styles.infoHeader}>
+                <View style={styles.infoIconBox}>
+                  <Ionicons name="information-circle" size={18} color={colors.primary} />
+                </View>
+                <AppText variant="label" style={styles.infoTitle}>About This Program</AppText>
+              </View>
+
+              <AppText variant="body" style={styles.infoBody}>
+                Scale formation depends on local water chemistry and usage patterns.
+                V-Guard's lab testing showed a strong reduction in scale impact in very
+                hard water — but real homes vary.
               </AppText>
+
+              <View style={styles.infoDivider} />
+
+              <AppText variant="body" style={styles.infoBody}>
+                You've been selected for V-Guard's Exclusive Hard Water Protection
+                Program. This installation provides additional protection for your
+                heater while helping us understand real-world performance.
+              </AppText>
+
+              <View style={styles.infoDivider} />
+
+              <AppText variant="body" style={styles.infoBody}>
+                Your feedback will help fine-tune this technology and explore additional
+                value for hard-water users.
+              </AppText>
+
+              <View style={styles.teamRow}>
+                <Ionicons name="checkmark-seal-fill" size={14} color={colors.primary} />
+                <AppText variant="caption" color={colors.primary} style={styles.teamText}>
+                  Team V-Guard R&D
+                </AppText>
+              </View>
             </View>
-            <View style={styles.divider} />
-            <AppText variant="body" style={styles.infoText}>
-              You have been selected for V-Guard's Exclusive Hard Water Protection Support Program (trial run). This installation provides additional protection for your heater while helping us understand real-world performance and identify how we can improve it further.
-            </AppText>
-            <View style={styles.divider} />
-            <AppText variant="body" style={styles.infoText}>
-              Your usage and feedback will help us fine-tune this technology and explore additional value we can offer to hard-water users.
-            </AppText>
-            <AppText variant="label" color={colors.primary} style={styles.teamTag}>
-              — Team V-Guard
-            </AppText>
           </View>
 
-          {/* ── Technician Form ── */}
-          <View style={styles.formCard}>
-            <AppText variant="h3" style={styles.formTitle}>
+          {/* ── Service person form ── */}
+          <View style={styles.section}>
+            <AppText variant="sectionTitle" style={styles.sectionTitle}>
               Service Person Details
             </AppText>
-            <AppText variant="caption" color={colors.textSecondary} style={styles.formSubtitle}>
-              Please enter your details before starting the installation
-            </AppText>
 
-            {/* Name */}
-            <View style={styles.fieldWrapper}>
-              <AppText variant="label" style={styles.fieldLabel}>
-                Full Name <AppText variant="label" color={colors.error}>*</AppText>
-              </AppText>
-              <View style={[styles.inputBox, errors.name ? styles.inputBoxError : null]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  placeholderTextColor={colors.textHint}
-                  value={name}
-                  onChangeText={(t) => { setName(t); setErrors((e) => ({ ...e, name: '' })); }}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
+            <View style={styles.formCard}>
+              {/* Name field */}
+              <View style={styles.formRow}>
+                <View style={styles.fieldIcon}>
+                  <Ionicons name="person-outline" size={17} color={colors.textSecondary} />
+                </View>
+                <View style={styles.fieldBody}>
+                  <AppText variant="caption" style={styles.fieldLabel}>Full Name</AppText>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Enter your name"
+                    placeholderTextColor={colors.textHint}
+                    value={name}
+                    onChangeText={(t) => { setName(t); setErrors((e) => ({ ...e, name: '' })); }}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                </View>
               </View>
-              {errors.name ? (
-                <AppText variant="caption" color={colors.error} style={styles.errorText}>
-                  {errors.name}
-                </AppText>
-              ) : null}
-            </View>
 
-            {/* Phone */}
-            <View style={styles.fieldWrapper}>
-              <AppText variant="label" style={styles.fieldLabel}>
-                Mobile Number <AppText variant="label" color={colors.error}>*</AppText>
-              </AppText>
-              <View style={[styles.inputBox, errors.phone ? styles.inputBoxError : null]}>
-                <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>
-                  +91
-                </AppText>
-                <View style={styles.prefixDivider} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="10-digit mobile number"
-                  placeholderTextColor={colors.textHint}
-                  value={phone}
-                  onChangeText={(t) => { setPhone(t.replace(/\D/g, '').slice(0, 10)); setErrors((e) => ({ ...e, phone: '' })); }}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  returnKeyType="done"
-                  onSubmitEditing={handleStart}
-                />
+              {errors.name ? <ErrorText msg={errors.name} /> : null}
+              <View style={styles.rowDivider} />
+
+              {/* Phone field */}
+              <View style={styles.formRow}>
+                <View style={styles.fieldIcon}>
+                  <Ionicons name="call-outline" size={17} color={colors.textSecondary} />
+                </View>
+                <View style={styles.fieldBody}>
+                  <AppText variant="caption" style={styles.fieldLabel}>Mobile Number</AppText>
+                  <View style={styles.phoneRow}>
+                    <AppText variant="body" color={colors.textSecondary}>+91  </AppText>
+                    <TextInput
+                      style={[styles.fieldInput, { flex: 1 }]}
+                      placeholder="10-digit number"
+                      placeholderTextColor={colors.textHint}
+                      value={phone}
+                      onChangeText={(t) => {
+                        setPhone(t.replace(/\D/g, '').slice(0, 10));
+                        setErrors((e) => ({ ...e, phone: '' }));
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={10}
+                      returnKeyType="done"
+                      onSubmitEditing={handleStart}
+                    />
+                  </View>
+                </View>
               </View>
-              {errors.phone ? (
-                <AppText variant="caption" color={colors.error} style={styles.errorText}>
-                  {errors.phone}
-                </AppText>
-              ) : null}
+
+              {errors.phone ? <ErrorText msg={errors.phone} /> : null}
             </View>
           </View>
 
-          {/* ── Start Button ── */}
-          <TouchableOpacity style={styles.startButton} onPress={handleStart} activeOpacity={0.85}>
-            <AppText variant="label" color={colors.white} style={styles.startText}>
-              Start Installation
-            </AppText>
-          </TouchableOpacity>
+          {/* ── CTA ── */}
+          <View style={styles.ctaSection}>
+            <TouchableOpacity
+              style={styles.startBtn}
+              onPress={handleStart}
+              activeOpacity={0.82}
+            >
+              <AppText variant="label" color={colors.white} style={styles.startBtnText}>
+                Start Installation
+              </AppText>
+              <View style={styles.startBtnArrow}>
+                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+              </View>
+            </TouchableOpacity>
+          </View>
 
-          <AppText variant="caption" color={colors.textHint} style={styles.footer}>
+          <AppText variant="caption2" color={colors.textTertiary} style={styles.footer}>
             For internal use only · V-Guard R&D
           </AppText>
 
@@ -159,146 +203,175 @@ export default function EntryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primary },
-  flex: { flex: 1 },
-  scroll: { flexGrow: 1 },
+function ErrorText({ msg }: { msg: string }) {
+  return (
+    <View style={errStyles.row}>
+      <Ionicons name="alert-circle" size={13} color={colors.error} />
+      <AppText variant="caption" color={colors.error} style={errStyles.text}>{msg}</AppText>
+    </View>
+  );
+}
 
-  // Banner
-  banner: {
+const errStyles = StyleSheet.create({
+  row:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingTop: 4 },
+  text: {},
+});
+
+const styles = StyleSheet.create({
+  safe:  { flex: 1, backgroundColor: colors.background },
+  flex:  { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: spacing.xxl },
+
+  // ── Hero ──
+  hero: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingTop:        spacing.xl,
+    paddingBottom:     spacing.xxl + spacing.lg,
   },
-  brandTag: {
+  brandChip: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            6,
+    marginBottom:   spacing.lg,
+  },
+  brandDot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: colors.accent,
+  },
+  brandText: {
     letterSpacing: 1.5,
-    opacity: 0.75,
-    marginBottom: spacing.sm,
+    color:         'rgba(255,255,255,0.65)',
   },
-  title: {
-    lineHeight: 32,
+  heroTitle: {
+    color:       colors.white,
+    lineHeight:  40,
     marginBottom: spacing.md,
   },
-  trialBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
-    borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           spacing.sm,
   },
-  trialText: {
-    fontWeight: '800',
-    letterSpacing: 1,
+  accentLine: {
+    width: 3, height: 16, borderRadius: 2,
+    backgroundColor: colors.accent,
+  },
+  heroSub: { color: 'rgba(255,255,255,0.75)' },
+  trialPill: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.sm,
+    paddingVertical:   3,
+    borderRadius:      radius.pill,
+    marginLeft:        spacing.xs,
+  },
+  trialText: { fontWeight: '800', letterSpacing: 0.8 },
+
+  // ── Sections ──
+  section: {
+    paddingHorizontal: spacing.lg,
+    marginTop:         spacing.lg,
+  },
+  sectionTitle: {
+    marginBottom: spacing.sm,
+    paddingLeft:  spacing.xs,
   },
 
-  // Info card
+  // ── Info card ──
   infoCard: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -16,
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
+    borderRadius:    radius.xl,
+    padding:         spacing.lg,
+    marginTop:       -spacing.xl,
+    ...shadows.md,
   },
-  infoRow: {
+  infoHeader: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems:    'center',
+    gap:           spacing.sm,
+    marginBottom:  spacing.md,
   },
-  infoDot: {
-    width: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    marginTop: 3,
-    alignSelf: 'stretch',
-    minHeight: 40,
+  infoIconBox: {
+    width: 32, height: 32, borderRadius: radius.sm,
+    backgroundColor: colors.primaryFaint,
+    alignItems: 'center', justifyContent: 'center',
   },
-  infoText: {
-    flex: 1,
-    lineHeight: 22,
-    color: colors.textSecondary,
+  infoTitle: {},
+  infoBody: {
+    color:      colors.textSecondary,
+    lineHeight: 24,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
+  infoDivider: {
+    height:           1,
+    backgroundColor:  colors.border,
+    marginVertical:   spacing.md,
   },
-  teamTag: {
-    marginTop: spacing.md,
-    textAlign: 'right',
-    fontStyle: 'italic',
+  teamRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            spacing.xs,
+    marginTop:      spacing.md,
+    justifyContent: 'flex-end',
   },
+  teamText: { fontStyle: 'italic' },
 
-  // Form card
+  // ── Form card (iOS grouped style) ──
   formCard: {
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
-  },
-  formTitle: {
-    marginBottom: spacing.xs,
-  },
-  formSubtitle: {
-    marginBottom: spacing.lg,
-  },
-  fieldWrapper: {
-    marginBottom: spacing.md,
-  },
-  fieldLabel: {
-    marginBottom: spacing.xs,
-  },
-  inputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
     backgroundColor: colors.surface,
+    borderRadius:    radius.xl,
+    overflow:        'hidden',
+    ...shadows.sm,
+  },
+  formRow: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    paddingVertical:  spacing.md,
     paddingHorizontal: spacing.md,
-    minHeight: 52,
+    gap:             spacing.md,
+    minHeight:       64,
   },
-  inputBoxError: {
-    borderColor: colors.error,
+  fieldIcon: {
+    width: 32, height: 32, borderRadius: radius.sm,
+    backgroundColor: colors.fillTertiary,
+    alignItems: 'center', justifyContent: 'center',
   },
-  prefix: {
-    marginRight: spacing.xs,
+  fieldBody:  { flex: 1 },
+  fieldLabel: { color: colors.textSecondary, marginBottom: 2 },
+  fieldInput: {
+    fontSize:  17,
+    color:     colors.textPrimary,
+    padding:   0,
   },
-  prefixDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: colors.border,
-    marginRight: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
-    paddingVertical: spacing.sm,
-  },
-  errorText: {
-    marginTop: 4,
+  phoneRow: { flexDirection: 'row', alignItems: 'center' },
+  rowDivider: {
+    height:           0.5,
+    backgroundColor:  colors.borderOpaque,
+    marginLeft:       spacing.md + 32 + spacing.md,
   },
 
-  // Start button
-  startButton: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingVertical: spacing.md + 2,
-    alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+  // ── CTA ──
+  ctaSection: {
+    paddingHorizontal: spacing.lg,
+    marginTop:         spacing.xl,
   },
-  startText: {
-    fontSize: 16,
-    letterSpacing: 0.3,
+  startBtn: {
+    flexDirection:    'row',
+    alignItems:       'center',
+    justifyContent:   'center',
+    backgroundColor:  colors.primary,
+    borderRadius:     radius.xl,
+    paddingVertical:  spacing.md + 2,
+    ...shadows.md,
   },
-  footer: {
-    textAlign: 'center',
-    marginVertical: spacing.lg,
+  startBtnText: {
+    fontSize:      17,
+    letterSpacing: -0.2,
   },
+  startBtnArrow: {
+    marginLeft:      spacing.md,
+    backgroundColor: colors.white,
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  footer: { textAlign: 'center', marginTop: spacing.xl },
 });

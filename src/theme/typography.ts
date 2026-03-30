@@ -1,51 +1,94 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { colors } from './colors';
 
+// Apple HIG text styles — SF Pro on iOS, Roboto on Android
+const sys = Platform.select({
+  ios:     '-apple-system',
+  android: 'Roboto',
+  default: 'System',
+});
+
 export const typography = StyleSheet.create({
+  // Large Title  — iOS nav large title
   h1: {
-    fontSize: 28,
+    fontFamily: sys,
+    fontSize:   34,
+    fontWeight: '700',
+    lineHeight: 41,
+    letterSpacing: 0.37,
+    color: colors.textPrimary,
+  },
+  // Title 1
+  h2: {
+    fontFamily: sys,
+    fontSize:   28,
     fontWeight: '700',
     lineHeight: 34,
+    letterSpacing: 0.36,
     color: colors.textPrimary,
-    letterSpacing: -0.3,
   },
-  h2: {
-    fontSize: 22,
+  // Title 2
+  h3: {
+    fontFamily: sys,
+    fontSize:   22,
     fontWeight: '700',
     lineHeight: 28,
-    color: colors.textPrimary,
-    letterSpacing: -0.2,
-  },
-  h3: {
-    fontSize: 18,
-    fontWeight: '600',
-    lineHeight: 24,
+    letterSpacing: 0.35,
     color: colors.textPrimary,
   },
+  // Section header (all-caps, tight tracking)
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: sys,
+    fontSize:   13,
+    fontWeight: '400',
     lineHeight: 18,
+    letterSpacing: 0,
     color: colors.textSecondary,
-    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
+  // Headline
   label: {
-    fontSize: 15,
+    fontFamily: sys,
+    fontSize:   17,
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: 22,
+    letterSpacing: -0.41,
     color: colors.textPrimary,
   },
+  // Body
   body: {
-    fontSize: 14,
+    fontFamily: sys,
+    fontSize:   17,
+    fontWeight: '400',
+    lineHeight: 22,
+    letterSpacing: -0.41,
+    color: colors.textPrimary,
+  },
+  // Subheadline
+  subhead: {
+    fontFamily: sys,
+    fontSize:   15,
     fontWeight: '400',
     lineHeight: 20,
+    letterSpacing: -0.24,
     color: colors.textPrimary,
   },
+  // Footnote / caption
   caption: {
-    fontSize: 12,
+    fontFamily: sys,
+    fontSize:   13,
+    fontWeight: '400',
+    lineHeight: 18,
+    letterSpacing: -0.08,
+    color: colors.textSecondary,
+  },
+  // Caption 2
+  caption2: {
+    fontFamily: sys,
+    fontSize:   12,
     fontWeight: '400',
     lineHeight: 16,
+    letterSpacing: 0,
     color: colors.textSecondary,
   },
 });

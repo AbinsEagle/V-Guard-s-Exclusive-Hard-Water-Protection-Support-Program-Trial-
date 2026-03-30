@@ -1,21 +1,21 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, spacing } from '../../theme';
+import { colors, radius, spacing } from '../../theme';
 import { AppText } from './AppText';
 
 interface StepIndicatorProps {
   currentStep: number;   // 1-based
-  totalSteps: number;
-  labels?: string[];
+  totalSteps:  number;
+  labels?:     string[];
 }
 
 export function StepIndicator({ currentStep, totalSteps, labels }: StepIndicatorProps) {
   return (
     <View style={styles.container}>
       {Array.from({ length: totalSteps }, (_, i) => {
-        const step = i + 1;
+        const step        = i + 1;
         const isCompleted = step < currentStep;
-        const isActive = step === currentStep;
+        const isActive    = step === currentStep;
 
         return (
           <React.Fragment key={step}>
@@ -24,31 +24,34 @@ export function StepIndicator({ currentStep, totalSteps, labels }: StepIndicator
                 style={[
                   styles.circle,
                   isCompleted && styles.circleCompleted,
-                  isActive && styles.circleActive,
+                  isActive    && styles.circleActive,
                 ]}
               >
                 {isCompleted ? (
-                  <AppText variant="caption" color={colors.white} style={styles.tick}>✓</AppText>
+                  <AppText variant="caption2" color={colors.white} style={styles.tick}>✓</AppText>
                 ) : (
                   <AppText
-                    variant="caption"
-                    color={isActive ? colors.white : colors.textHint}
+                    variant="caption2"
+                    color={isActive ? colors.white : colors.textTertiary}
+                    style={styles.stepNum}
                   >
                     {step}
                   </AppText>
                 )}
               </View>
+
               {labels?.[i] && (
                 <AppText
-                  variant="caption"
-                  color={isActive ? colors.primary : colors.textHint}
-                  style={styles.label}
+                  variant="caption2"
+                  color={isActive ? colors.primary : colors.textTertiary}
+                  style={[styles.label, isActive && styles.labelActive]}
                   numberOfLines={1}
                 >
                   {labels[i]}
                 </AppText>
               )}
             </View>
+
             {step < totalSteps && (
               <View style={[styles.line, isCompleted && styles.lineCompleted]} />
             )}
@@ -61,50 +64,51 @@ export function StepIndicator({ currentStep, totalSteps, labels }: StepIndicator
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
+    flexDirection:   'row',
+    alignItems:      'flex-start',
+    justifyContent:  'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical:   spacing.md,
+    backgroundColor:   colors.background,
   },
-  stepWrapper: {
-    alignItems: 'center',
-    width: 52,
-  },
+
+  stepWrapper: { alignItems: 'center', width: 48 },
+
   circle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width:           26,
+    height:          26,
+    borderRadius:    13,
+    backgroundColor: colors.fillTertiary,
+    borderWidth:     1.5,
+    borderColor:     colors.borderOpaque,
+    alignItems:      'center',
+    justifyContent:  'center',
   },
   circleActive: {
-    borderColor: colors.primary,
     backgroundColor: colors.primary,
+    borderColor:     colors.primary,
   },
   circleCompleted: {
-    borderColor: colors.success,
     backgroundColor: colors.success,
+    borderColor:     colors.success,
   },
-  tick: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
+
+  tick:    { fontWeight: '700', fontSize: 11 },
+  stepNum: { fontWeight: '600' },
+
   line: {
-    flex: 1,
-    height: 2,
-    backgroundColor: colors.border,
-    marginTop: 13,
+    flex:            1,
+    height:          1.5,
+    backgroundColor: colors.borderOpaque,
+    marginTop:       12,
   },
-  lineCompleted: {
-    backgroundColor: colors.success,
-  },
+  lineCompleted: { backgroundColor: colors.success },
+
   label: {
-    marginTop: spacing.xs,
-    fontSize: 10,
-    textAlign: 'center',
+    marginTop:  4,
+    fontSize:   10,
+    textAlign:  'center',
+    letterSpacing: 0,
   },
+  labelActive: { color: colors.primary, fontWeight: '600' },
 });

@@ -1,30 +1,49 @@
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing } from '../../theme';
+import { colors, radius, shadows } from '../../theme';
+
+type CardVariant = 'default' | 'inset' | 'plain';
 
 interface CardProps {
-  children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
+  children:  React.ReactNode;
+  style?:    ViewStyle | ViewStyle[];
+  variant?:  CardVariant;
+  noPadding?: boolean;
 }
 
-export function Card({ children, style }: CardProps) {
+export function Card({ children, style, variant = 'default', noPadding }: CardProps) {
   return (
-    <View style={[styles.card, ...(Array.isArray(style) ? style : style ? [style] : [])]}>
+    <View
+      style={[
+        styles.base,
+        styles[variant],
+        noPadding && styles.noPadding,
+        ...(Array.isArray(style) ? style : style ? [style] : []),
+      ]}
+    >
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+  base: {
+    borderRadius:     radius.lg,
+    padding:          16,
+    backgroundColor:  colors.surface,
   },
+  // Default — white card on grey background, hair-line border + soft shadow
+  default: {
+    ...shadows.sm,
+    borderWidth:  0.5,
+    borderColor:  colors.borderOpaque,
+  },
+  // Inset — sits inside another card / grouped list section
+  inset: {
+    backgroundColor: colors.fillTertiary,
+    borderRadius:    radius.md,
+  },
+  // Plain — no shadow, no border; background only
+  plain: {},
+
+  noPadding: { padding: 0 },
 });

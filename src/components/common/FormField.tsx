@@ -6,50 +6,39 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { AppText } from './AppText';
-import { colors, spacing } from '../../theme';
+import { colors, radius, spacing } from '../../theme';
+
+// ─── Text Field ───────────────────────────────────────────────────────────────
+// Apple HIG "inset grouped" style — label above, input in rounded rect
 
 interface FormFieldProps extends TextInputProps {
-  label: string;
-  error?: string;
-  required?: boolean;
-  hint?: string;
+  label:        string;
+  error?:       string;
+  required?:    boolean;
+  hint?:        string;
   rightElement?: React.ReactNode;
 }
 
 export function FormField({
-  label,
-  error,
-  required,
-  hint,
-  rightElement,
-  style,
-  ...inputProps
+  label, error, required, hint, rightElement, style, ...inputProps
 }: FormFieldProps) {
   return (
     <View style={styles.container}>
       <View style={styles.labelRow}>
-        <AppText variant="label" style={styles.label}>
+        <AppText variant="caption" style={styles.label}>
           {label}
-          {required && (
-            <AppText variant="label" color={colors.error}>
-              {' '}*
-            </AppText>
-          )}
+          {required && <AppText variant="caption" color={colors.error}>  *</AppText>}
         </AppText>
-        {hint && (
-          <AppText variant="caption" color={colors.textHint}>
-            {hint}
-          </AppText>
-        )}
+        {hint && <AppText variant="caption" color={colors.textTertiary}>{hint}</AppText>}
       </View>
 
-      <View style={[styles.inputWrapper, error ? styles.inputError : null]}>
+      <View style={[styles.field, error ? styles.fieldError : null]}>
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={colors.textHint}
           {...inputProps}
         />
-        {rightElement && <View style={styles.rightElement}>{rightElement}</View>}
+        {rightElement && <View style={styles.right}>{rightElement}</View>}
       </View>
 
       {error && (
@@ -61,58 +50,52 @@ export function FormField({
   );
 }
 
-// ─── Select Field ─────────────────────────────────────────────────────────────
+// ─── Chip Select ──────────────────────────────────────────────────────────────
+// iOS segmented-control feel using tappable pill chips
 
-interface SelectOption {
-  label: string;
-  value: string;
-}
+interface SelectOption { label: string; value: string; }
 
 interface SelectFieldProps {
-  label: string;
-  options: SelectOption[];
-  value: string;
-  onSelect: (value: string) => void;
-  error?: string;
+  label:    string;
+  options:  SelectOption[];
+  value:    string;
+  onSelect: (v: string) => void;
+  error?:   string;
   required?: boolean;
 }
 
 export function SelectField({
-  label,
-  options,
-  value,
-  onSelect,
-  error,
-  required,
+  label, options, value, onSelect, error, required,
 }: SelectFieldProps) {
   return (
     <View style={styles.container}>
-      <AppText variant="label" style={styles.label}>
+      <AppText variant="caption" style={styles.label}>
         {label}
-        {required && (
-          <AppText variant="label" color={colors.error}>
-            {' '}*
-          </AppText>
-        )}
+        {required && <AppText variant="caption" color={colors.error}>  *</AppText>}
       </AppText>
-      <View style={styles.optionsRow}>
-        {options.map((opt) => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[styles.option, value === opt.value && styles.optionSelected]}
-            onPress={() => onSelect(opt.value)}
-            activeOpacity={0.75}
-          >
-            <AppText
-              variant="caption"
-              color={value === opt.value ? colors.primary : colors.textSecondary}
-              style={value === opt.value ? styles.optionTextSelected : undefined}
+
+      <View style={styles.chipRow}>
+        {options.map((opt) => {
+          const active = value === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => onSelect(opt.value)}
+              activeOpacity={0.7}
             >
-              {opt.label}
-            </AppText>
-          </TouchableOpacity>
-        ))}
+              <AppText
+                variant="subhead"
+                color={active ? colors.primary : colors.textSecondary}
+                style={active ? styles.chipLabelActive : undefined}
+              >
+                {opt.label}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
       {error && (
         <AppText variant="caption" color={colors.error} style={styles.errorText}>
           {error}
@@ -123,62 +106,47 @@ export function SelectField({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  label: {
-    marginBottom: spacing.xs,
-    color: colors.textPrimary,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
+  container:  { marginBottom: spacing.md },
+  labelRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  label:      { color: colors.textSecondary },
+
+  // Input field — Apple "fill" style
+  field: {
+    flexDirection:    'row',
+    alignItems:       'center',
+    backgroundColor:  colors.fillTertiary,
+    borderRadius:     radius.md,
     paddingHorizontal: spacing.md,
-    minHeight: 48,
+    minHeight:        44,
+    borderWidth:      0.5,
+    borderColor:      'transparent',
   },
-  inputError: {
+  fieldError: {
     borderColor: colors.error,
+    backgroundColor: colors.errorLight,
   },
   input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
+    flex:        1,
+    fontSize:    17,
+    color:       colors.textPrimary,
     paddingVertical: spacing.sm,
   },
-  rightElement: {
-    marginLeft: spacing.sm,
-  },
-  errorText: {
-    marginTop: spacing.xs,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  option: {
+  right:       { marginLeft: spacing.sm },
+  errorText:   { marginTop: 4 },
+
+  // Chips
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm - 2,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    paddingVertical:   spacing.sm - 2,
+    borderRadius:      radius.pill,
+    backgroundColor:   colors.fillTertiary,
+    borderWidth:       0.5,
+    borderColor:       'transparent',
   },
-  optionSelected: {
-    borderColor: colors.primary,
+  chipActive: {
     backgroundColor: colors.primaryFaint,
+    borderColor:     colors.primary,
   },
-  optionTextSelected: {
-    fontWeight: '600',
-  },
+  chipLabelActive: { fontWeight: '600' },
 });
