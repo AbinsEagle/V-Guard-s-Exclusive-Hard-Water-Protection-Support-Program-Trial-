@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -48,73 +49,118 @@ export default function EntryScreen() {
           showsVerticalScrollIndicator={false}
         >
 
-          {/* ── Hero / Large-title header ── */}
+          {/* ── Hero illustration ── */}
           <View style={styles.hero}>
-            {/* Brand chip */}
-            <View style={styles.brandChip}>
+            {/* Brand row */}
+            <View style={styles.brandRow}>
               <View style={styles.brandDot} />
-              <AppText variant="caption" color={colors.primary} style={styles.brandText}>
+              <AppText variant="caption" color="rgba(255,255,255,0.65)" style={styles.brandText}>
                 V-GUARD INDUSTRIES
-              </AppText>
-            </View>
-
-            {/* Large title */}
-            <AppText variant="h1" style={styles.heroTitle}>
-              Hard Water{'\n'}Protection
-            </AppText>
-
-            {/* Accent subtitle */}
-            <View style={styles.subtitleRow}>
-              <View style={styles.accentLine} />
-              <AppText variant="subhead" color={colors.textSecondary} style={styles.heroSub}>
-                Exclusive Support Program
               </AppText>
               <View style={styles.trialPill}>
                 <AppText variant="caption2" color={colors.accentDark} style={styles.trialText}>
-                  TRIAL
+                  TRIAL RUN
                 </AppText>
               </View>
             </View>
+
+            {/* Visual illustration — water + heater + protection */}
+            <View style={styles.illustration}>
+              {/* Background glow circles */}
+              <View style={styles.glowOuter} />
+              <View style={styles.glowInner} />
+
+              {/* Central icon cluster */}
+              <View style={styles.illustrationCenter}>
+                {/* Heater unit */}
+                <View style={styles.heaterBox}>
+                  <Ionicons name="water" size={28} color={colors.white} />
+                  <AppText variant="caption2" color="rgba(255,255,255,0.75)" style={styles.heaterLabel}>
+                    Water Heater
+                  </AppText>
+                </View>
+
+                {/* Connection arrow */}
+                <View style={styles.connectorLine}>
+                  <View style={styles.connectorDot} />
+                  <View style={styles.connectorTrack} />
+                  <View style={styles.connectorDot} />
+                </View>
+
+                {/* Anti-scalant cartridge */}
+                <View style={[styles.heaterBox, styles.cartridgeBox]}>
+                  <Ionicons name="shield-checkmark" size={28} color={colors.accent} />
+                  <AppText variant="caption2" color="rgba(255,255,255,0.75)" style={styles.heaterLabel}>
+                    Anti-Scalant
+                  </AppText>
+                </View>
+              </View>
+
+              {/* Floating stat chips */}
+              <View style={[styles.statChip, styles.statChipLeft]}>
+                <Ionicons name="checkmark-circle" size={12} color={colors.success} />
+                <AppText variant="caption2" color={colors.white} style={styles.statText}>
+                  Scale Protection
+                </AppText>
+              </View>
+              <View style={[styles.statChip, styles.statChipRight]}>
+                <Ionicons name="time-outline" size={12} color={colors.accent} />
+                <AppText variant="caption2" color={colors.white} style={styles.statText}>
+                  10-Month Trial
+                </AppText>
+              </View>
+            </View>
+
+            {/* Large title */}
+            <AppText variant="h2" style={styles.heroTitle}>
+              Hard Water{'\n'}Protection Program
+            </AppText>
           </View>
 
-          {/* ── Program description card ── */}
-          <View style={styles.section}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoHeader}>
-                <View style={styles.infoIconBox}>
-                  <Ionicons name="information-circle" size={18} color={colors.primary} />
-                </View>
-                <AppText variant="label" style={styles.infoTitle}>About This Program</AppText>
+          {/* ── Enrollment message — FIRST & prominent ── */}
+          <View style={styles.enrollCard}>
+            <View style={styles.enrollHeader}>
+              <View style={styles.enrollIconRing}>
+                <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
               </View>
-
-              <AppText variant="body" style={styles.infoBody}>
-                Scale formation depends on local water chemistry and usage patterns.
-                V-Guard's lab testing showed a strong reduction in scale impact in very
-                hard water — but real homes vary.
+              <AppText variant="label" style={styles.enrollTitle}>
+                You've been selected!
               </AppText>
-
-              <View style={styles.infoDivider} />
-
-              <AppText variant="body" style={styles.infoBody}>
-                You've been selected for V-Guard's Exclusive Hard Water Protection
-                Program. This installation provides additional protection for your
-                heater while helping us understand real-world performance.
-              </AppText>
-
-              <View style={styles.infoDivider} />
-
-              <AppText variant="body" style={styles.infoBody}>
-                Your feedback will help fine-tune this technology and explore additional
-                value for hard-water users.
-              </AppText>
-
-              <View style={styles.teamRow}>
-                <Ionicons name="checkmark-seal-fill" size={14} color={colors.primary} />
-                <AppText variant="caption" color={colors.primary} style={styles.teamText}>
-                  Team V-Guard R&D
-                </AppText>
-              </View>
             </View>
+
+            <AppText variant="body" style={styles.enrollMsg}>
+              You've been selected for{' '}
+              <AppText variant="body" style={styles.enrollBold}>
+                V-Guard's Exclusive Hard Water Protection Program.
+              </AppText>
+              {' '}This installation provides additional protection for your heater while
+              helping us understand real-world performance.
+            </AppText>
+
+            {/* Benefit pills */}
+            <View style={styles.benefitRow}>
+              <BenefitChip icon="water-outline"     label="Scale Reduction" />
+              <BenefitChip icon="flash-outline"     label="Better Efficiency" />
+              <BenefitChip icon="heart-outline"     label="Free Service" />
+            </View>
+
+            <View style={styles.enrollDivider} />
+
+            <AppText variant="caption" color={colors.textSecondary} style={styles.enrollFooter}>
+              Your usage and feedback will help fine-tune this technology and explore
+              additional value for hard-water users.{'\n'}
+              <AppText variant="caption" color={colors.primary}>— Team V-Guard</AppText>
+            </AppText>
+          </View>
+
+          {/* ── Scale formation note ── */}
+          <View style={styles.noteCard}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+            <AppText variant="caption" color={colors.textSecondary} style={styles.noteText}>
+              Scale formation depends on local water chemistry and usage patterns.
+              Lab testing showed strong results — but real homes vary. This trial
+              helps us quantify real-world effectiveness.
+            </AppText>
           </View>
 
           {/* ── Service person form ── */}
@@ -124,7 +170,7 @@ export default function EntryScreen() {
             </AppText>
 
             <View style={styles.formCard}>
-              {/* Name field */}
+              {/* Name */}
               <View style={styles.formRow}>
                 <View style={styles.fieldIcon}>
                   <Ionicons name="person-outline" size={17} color={colors.textSecondary} />
@@ -143,10 +189,10 @@ export default function EntryScreen() {
                 </View>
               </View>
 
-              {errors.name ? <ErrorText msg={errors.name} /> : null}
+              {errors.name ? <FieldError msg={errors.name} /> : null}
               <View style={styles.rowDivider} />
 
-              {/* Phone field */}
+              {/* Phone */}
               <View style={styles.formRow}>
                 <View style={styles.fieldIcon}>
                   <Ionicons name="call-outline" size={17} color={colors.textSecondary} />
@@ -173,17 +219,13 @@ export default function EntryScreen() {
                 </View>
               </View>
 
-              {errors.phone ? <ErrorText msg={errors.phone} /> : null}
+              {errors.phone ? <FieldError msg={errors.phone} /> : null}
             </View>
           </View>
 
           {/* ── CTA ── */}
           <View style={styles.ctaSection}>
-            <TouchableOpacity
-              style={styles.startBtn}
-              onPress={handleStart}
-              activeOpacity={0.82}
-            >
+            <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.82}>
               <AppText variant="label" color={colors.white} style={styles.startBtnText}>
                 Start Installation
               </AppText>
@@ -203,7 +245,18 @@ export default function EntryScreen() {
   );
 }
 
-function ErrorText({ msg }: { msg: string }) {
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function BenefitChip({ icon, label }: { icon: string; label: string }) {
+  return (
+    <View style={chipStyles.chip}>
+      <Ionicons name={icon as any} size={13} color={colors.primary} />
+      <AppText variant="caption2" color={colors.primary} style={chipStyles.label}>{label}</AppText>
+    </View>
+  );
+}
+
+function FieldError({ msg }: { msg: string }) {
   return (
     <View style={errStyles.row}>
       <Ionicons name="alert-circle" size={13} color={colors.error} />
@@ -212,110 +265,180 @@ function ErrorText({ msg }: { msg: string }) {
   );
 }
 
+const chipStyles = StyleSheet.create({
+  chip: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             4,
+    backgroundColor: colors.primaryFaint,
+    paddingHorizontal: spacing.sm,
+    paddingVertical:   4,
+    borderRadius:    radius.pill,
+  },
+  label: { color: colors.primary, fontWeight: '500' },
+});
+
 const errStyles = StyleSheet.create({
-  row:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingTop: 4 },
+  row:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingVertical: 4 },
   text: {},
 });
 
 const styles = StyleSheet.create({
-  safe:  { flex: 1, backgroundColor: colors.background },
-  flex:  { flex: 1 },
+  safe:   { flex: 1, backgroundColor: colors.background },
+  flex:   { flex: 1 },
   scroll: { flexGrow: 1, paddingBottom: spacing.xxl },
 
   // ── Hero ──
   hero: {
-    backgroundColor: colors.primary,
+    backgroundColor:   colors.primary,
     paddingHorizontal: spacing.lg,
     paddingTop:        spacing.xl,
-    paddingBottom:     spacing.xxl + spacing.lg,
+    paddingBottom:     spacing.xxl + spacing.xl,
   },
-  brandChip: {
-    flexDirection:  'row',
-    alignItems:     'center',
-    gap:            6,
-    marginBottom:   spacing.lg,
-  },
-  brandDot: {
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: colors.accent,
-  },
-  brandText: {
-    letterSpacing: 1.5,
-    color:         'rgba(255,255,255,0.65)',
-  },
-  heroTitle: {
-    color:       colors.white,
-    lineHeight:  40,
-    marginBottom: spacing.md,
-  },
-  subtitleRow: {
+  brandRow: {
     flexDirection: 'row',
     alignItems:    'center',
     gap:           spacing.sm,
+    marginBottom:  spacing.lg,
   },
-  accentLine: {
-    width: 3, height: 16, borderRadius: 2,
-    backgroundColor: colors.accent,
-  },
-  heroSub: { color: 'rgba(255,255,255,0.75)' },
+  brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
+  brandText: { flex: 1, letterSpacing: 1.5 },
   trialPill: {
-    backgroundColor: colors.accent,
+    backgroundColor:   colors.accent,
     paddingHorizontal: spacing.sm,
     paddingVertical:   3,
     borderRadius:      radius.pill,
-    marginLeft:        spacing.xs,
   },
   trialText: { fontWeight: '800', letterSpacing: 0.8 },
 
-  // ── Sections ──
-  section: {
-    paddingHorizontal: spacing.lg,
-    marginTop:         spacing.lg,
+  // Illustration
+  illustration: {
+    alignItems:     'center',
+    justifyContent: 'center',
+    height:         140,
+    marginBottom:   spacing.lg,
+    position:       'relative',
   },
-  sectionTitle: {
-    marginBottom: spacing.sm,
-    paddingLeft:  spacing.xs,
+  glowOuter: {
+    position:        'absolute',
+    width:           160, height: 160,
+    borderRadius:    80,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-
-  // ── Info card ──
-  infoCard: {
-    backgroundColor: colors.surface,
-    borderRadius:    radius.xl,
-    padding:         spacing.lg,
-    marginTop:       -spacing.xl,
-    ...shadows.md,
+  glowInner: {
+    position:        'absolute',
+    width:           100, height: 100,
+    borderRadius:    50,
+    backgroundColor: 'rgba(255,255,255,0.07)',
   },
-  infoHeader: {
+  illustrationCenter: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            spacing.md,
+  },
+  heaterBox: {
+    alignItems:      'center',
+    gap:             spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius:    radius.lg,
+    padding:         spacing.md,
+    minWidth:        80,
+  },
+  cartridgeBox: {
+    backgroundColor: 'rgba(245,166,35,0.18)',
+    borderWidth:     1,
+    borderColor:     'rgba(245,166,35,0.35)',
+  },
+  heaterLabel: { textAlign: 'center' },
+  connectorLine: {
     flexDirection: 'row',
     alignItems:    'center',
+    gap:           3,
+  },
+  connectorDot: {
+    width: 5, height: 5, borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  connectorTrack: {
+    width:           24, height: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  statChip: {
+    position:          'absolute',
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               4,
+    backgroundColor:   'rgba(255,255,255,0.12)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical:   4,
+    borderRadius:      radius.pill,
+  },
+  statChipLeft:  { bottom: 8, left: 0 },
+  statChipRight: { bottom: 8, right: 0 },
+  statText: { fontSize: 11 },
+
+  heroTitle: {
+    color:      colors.white,
+    lineHeight: 34,
+  },
+
+  // ── Enrollment card — FIRST ──
+  enrollCard: {
+    backgroundColor:   colors.surface,
+    borderRadius:      radius.xl,
+    marginHorizontal:  spacing.lg,
+    marginTop:         -spacing.xl,
+    padding:           spacing.lg,
+    ...shadows.md,
+    borderWidth:       0.5,
+    borderColor:       colors.borderOpaque,
+  },
+  enrollHeader: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            spacing.md,
+    marginBottom:   spacing.md,
+  },
+  enrollIconRing: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: colors.primaryFaint,
+    alignItems:      'center',
+    justifyContent:  'center',
+    borderWidth:     2,
+    borderColor:     colors.primary,
+  },
+  enrollTitle:   { flex: 1 },
+  enrollMsg: {
+    color:      colors.textSecondary,
+    lineHeight: 24,
+    marginBottom: spacing.md,
+  },
+  enrollBold: { color: colors.primary, fontWeight: '600' },
+  benefitRow: {
+    flexDirection: 'row',
+    flexWrap:      'wrap',
     gap:           spacing.sm,
     marginBottom:  spacing.md,
   },
-  infoIconBox: {
-    width: 32, height: 32, borderRadius: radius.sm,
-    backgroundColor: colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  infoTitle: {},
-  infoBody: {
-    color:      colors.textSecondary,
-    lineHeight: 24,
-  },
-  infoDivider: {
-    height:           1,
-    backgroundColor:  colors.border,
-    marginVertical:   spacing.md,
-  },
-  teamRow: {
-    flexDirection:  'row',
-    alignItems:     'center',
-    gap:            spacing.xs,
-    marginTop:      spacing.md,
-    justifyContent: 'flex-end',
-  },
-  teamText: { fontStyle: 'italic' },
+  enrollDivider: { height: 0.5, backgroundColor: colors.borderOpaque, marginBottom: spacing.md },
+  enrollFooter:  { lineHeight: 20 },
 
-  // ── Form card (iOS grouped style) ──
+  // ── Note ──
+  noteCard: {
+    flexDirection:     'row',
+    alignItems:        'flex-start',
+    gap:               spacing.sm,
+    marginHorizontal:  spacing.lg,
+    marginTop:         spacing.md,
+    backgroundColor:   colors.fillTertiary,
+    borderRadius:      radius.lg,
+    padding:           spacing.md,
+  },
+  noteText: { flex: 1, lineHeight: 18 },
+
+  // ── Form ──
+  section:      { paddingHorizontal: spacing.lg, marginTop: spacing.lg },
+  sectionTitle: { marginBottom: spacing.sm, paddingLeft: spacing.xs },
   formCard: {
     backgroundColor: colors.surface,
     borderRadius:    radius.xl,
@@ -323,12 +446,12 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   formRow: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    paddingVertical:  spacing.md,
+    flexDirection:     'row',
+    alignItems:        'center',
+    paddingVertical:   spacing.md,
     paddingHorizontal: spacing.md,
-    gap:             spacing.md,
-    minHeight:       64,
+    gap:               spacing.md,
+    minHeight:         64,
   },
   fieldIcon: {
     width: 32, height: 32, borderRadius: radius.sm,
@@ -337,36 +460,26 @@ const styles = StyleSheet.create({
   },
   fieldBody:  { flex: 1 },
   fieldLabel: { color: colors.textSecondary, marginBottom: 2 },
-  fieldInput: {
-    fontSize:  17,
-    color:     colors.textPrimary,
-    padding:   0,
-  },
-  phoneRow: { flexDirection: 'row', alignItems: 'center' },
+  fieldInput: { fontSize: 17, color: colors.textPrimary, padding: 0 },
+  phoneRow:   { flexDirection: 'row', alignItems: 'center' },
   rowDivider: {
-    height:           0.5,
-    backgroundColor:  colors.borderOpaque,
-    marginLeft:       spacing.md + 32 + spacing.md,
+    height:          0.5,
+    backgroundColor: colors.borderOpaque,
+    marginLeft:      spacing.md + 32 + spacing.md,
   },
 
   // ── CTA ──
-  ctaSection: {
-    paddingHorizontal: spacing.lg,
-    marginTop:         spacing.xl,
-  },
+  ctaSection: { paddingHorizontal: spacing.lg, marginTop: spacing.xl },
   startBtn: {
-    flexDirection:    'row',
-    alignItems:       'center',
-    justifyContent:   'center',
-    backgroundColor:  colors.primary,
-    borderRadius:     radius.xl,
-    paddingVertical:  spacing.md + 2,
+    flexDirection:   'row',
+    alignItems:      'center',
+    justifyContent:  'center',
+    backgroundColor: colors.primary,
+    borderRadius:    radius.xl,
+    paddingVertical: spacing.md + 2,
     ...shadows.md,
   },
-  startBtnText: {
-    fontSize:      17,
-    letterSpacing: -0.2,
-  },
+  startBtnText:  { fontSize: 17, letterSpacing: -0.2 },
   startBtnArrow: {
     marginLeft:      spacing.md,
     backgroundColor: colors.white,
