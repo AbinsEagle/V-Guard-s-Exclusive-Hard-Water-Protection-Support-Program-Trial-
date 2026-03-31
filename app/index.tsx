@@ -302,7 +302,7 @@ const errStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: colors.headerBg },
   flex:   { flex: 1 },
-  scroll: { flexGrow: 1, paddingBottom: spacing.xxl },
+  scroll: { flexGrow: 1, paddingBottom: spacing.lg },
 
   // ── Dark header bar ──
   header: {
@@ -333,9 +333,9 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor:   colors.primary,
     paddingHorizontal: spacing.lg,
-    paddingTop:        spacing.xl,
-    paddingBottom:     spacing.xxl + spacing.lg,
-    gap:               spacing.lg,
+    paddingTop:        spacing.lg,
+    paddingBottom:     spacing.xxl,
+    gap:               spacing.sm,
   },
   illustration: {
     flexDirection:  'row',
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     alignItems:        'flex-start',
     gap:               spacing.sm,
     marginHorizontal:  spacing.lg,
-    marginTop:         spacing.md,
+    marginTop:         spacing.sm,
     backgroundColor:   colors.surface,
     borderRadius:      radius.lg,
     padding:           spacing.md,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   noteText: { flex: 1, lineHeight: 18 },
 
   // ── Form ──
-  section:      { paddingHorizontal: spacing.lg, marginTop: spacing.lg },
+  section:      { paddingHorizontal: spacing.lg, marginTop: spacing.md },
   sectionTitle: { marginBottom: spacing.sm, paddingLeft: spacing.xs },
   formCard: {
     backgroundColor: colors.surface,
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   },
 
   // ── CTA ──
-  ctaSection: { paddingHorizontal: spacing.lg, marginTop: spacing.xl },
+  ctaSection: { paddingHorizontal: spacing.lg, marginTop: spacing.md },
   startBtn: {
     flexDirection:    'row',
     alignItems:       'center',
@@ -468,5 +468,5 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  footer: { textAlign: 'center', marginTop: spacing.xl },
+  footer: { textAlign: 'center', marginTop: spacing.md, marginBottom: spacing.sm },
 });
