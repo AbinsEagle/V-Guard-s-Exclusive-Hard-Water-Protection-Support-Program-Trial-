@@ -49,83 +49,64 @@ export default function EntryScreen() {
           showsVerticalScrollIndicator={false}
         >
 
-          {/* ── Hero illustration ── */}
-          <View style={styles.hero}>
-            {/* Brand row */}
-            <View style={styles.brandRow}>
-              <View style={styles.brandDot} />
-              <AppText variant="caption" color="rgba(255,255,255,0.65)" style={styles.brandText}>
-                V-GUARD INDUSTRIES
+          {/* ── Dark header bar (matches V-Guard app) ── */}
+          <View style={styles.header}>
+            <View style={styles.logoRow}>
+              {/* V-Guard wordmark + kangaroo placeholder */}
+              <View style={styles.logoBox}>
+                <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
+              </View>
+              <View>
+                <AppText variant="label" color={colors.white} style={styles.logoName}>
+                  V-GUARD
+                </AppText>
+                <AppText variant="caption2" color="rgba(255,255,255,0.55)" style={styles.logoTag}>
+                  INDUSTRIES LTD
+                </AppText>
+              </View>
+            </View>
+            <View style={styles.trialPill}>
+              <AppText variant="caption2" color={colors.headerBg} style={styles.trialText}>
+                TRIAL RUN
               </AppText>
-              <View style={styles.trialPill}>
-                <AppText variant="caption2" color={colors.accentDark} style={styles.trialText}>
-                  TRIAL RUN
-                </AppText>
-              </View>
             </View>
+          </View>
 
-            {/* Visual illustration — water + heater + protection */}
+          {/* ── Amber hero banner ── */}
+          <View style={styles.hero}>
+            {/* Illustration cluster */}
             <View style={styles.illustration}>
-              {/* Background glow circles */}
-              <View style={styles.glowOuter} />
-              <View style={styles.glowInner} />
-
-              {/* Central icon cluster */}
-              <View style={styles.illustrationCenter}>
-                {/* Heater unit */}
-                <View style={styles.heaterBox}>
-                  <Ionicons name="water" size={28} color={colors.white} />
-                  <AppText variant="caption2" color="rgba(255,255,255,0.75)" style={styles.heaterLabel}>
-                    Water Heater
-                  </AppText>
-                </View>
-
-                {/* Connection arrow */}
-                <View style={styles.connectorLine}>
-                  <View style={styles.connectorDot} />
-                  <View style={styles.connectorTrack} />
-                  <View style={styles.connectorDot} />
-                </View>
-
-                {/* Anti-scalant cartridge */}
-                <View style={[styles.heaterBox, styles.cartridgeBox]}>
-                  <Ionicons name="shield-checkmark" size={28} color={colors.accent} />
-                  <AppText variant="caption2" color="rgba(255,255,255,0.75)" style={styles.heaterLabel}>
-                    Anti-Scalant
-                  </AppText>
-                </View>
+              <IllustrationBox icon="water"            label="Heater"      tint={colors.primaryDark} />
+              <View style={styles.connector}>
+                <View style={styles.connDot} />
+                <View style={styles.connLine} />
+                <View style={styles.connDot} />
               </View>
-
-              {/* Floating stat chips */}
-              <View style={[styles.statChip, styles.statChipLeft]}>
-                <Ionicons name="checkmark-circle" size={12} color={colors.success} />
-                <AppText variant="caption2" color={colors.white} style={styles.statText}>
-                  Scale Protection
-                </AppText>
-              </View>
-              <View style={[styles.statChip, styles.statChipRight]}>
-                <Ionicons name="time-outline" size={12} color={colors.accent} />
-                <AppText variant="caption2" color={colors.white} style={styles.statText}>
-                  10-Month Trial
-                </AppText>
-              </View>
+              <IllustrationBox icon="shield-checkmark" label="Anti-Scalant" tint={colors.primaryDark} />
             </View>
 
-            {/* Large title */}
-            <AppText variant="h2" style={styles.heroTitle}>
+            <AppText variant="h2" color={colors.headerBg} style={styles.heroTitle}>
               Hard Water{'\n'}Protection Program
+            </AppText>
+            <AppText variant="subhead" color={colors.primaryDark} style={styles.heroSub}>
+              Exclusive Support Program · 10-Month Trial
             </AppText>
           </View>
 
-          {/* ── Enrollment message — FIRST & prominent ── */}
+          {/* ── YOU'VE BEEN SELECTED — first & prominent ── */}
           <View style={styles.enrollCard}>
-            <View style={styles.enrollHeader}>
+            <View style={styles.enrollTop}>
               <View style={styles.enrollIconRing}>
-                <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
+                <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
               </View>
-              <AppText variant="label" style={styles.enrollTitle}>
-                You've been selected!
-              </AppText>
+              <View style={styles.enrollTitleBlock}>
+                <AppText variant="label" style={styles.enrollTitle}>
+                  You've been selected!
+                </AppText>
+                <AppText variant="caption" color={colors.textSecondary}>
+                  V-Guard Exclusive Program
+                </AppText>
+              </View>
             </View>
 
             <AppText variant="body" style={styles.enrollMsg}>
@@ -133,23 +114,26 @@ export default function EntryScreen() {
               <AppText variant="body" style={styles.enrollBold}>
                 V-Guard's Exclusive Hard Water Protection Program.
               </AppText>
-              {' '}This installation provides additional protection for your heater while
-              helping us understand real-world performance.
+              {' '}This installation provides additional protection for your heater
+              while helping us understand real-world performance and identify how
+              we can improve it further.
             </AppText>
 
-            {/* Benefit pills */}
+            {/* Benefit chips */}
             <View style={styles.benefitRow}>
-              <BenefitChip icon="water-outline"     label="Scale Reduction" />
-              <BenefitChip icon="flash-outline"     label="Better Efficiency" />
-              <BenefitChip icon="heart-outline"     label="Free Service" />
+              <BenefitChip icon="water-outline"       label="Scale Reduction" />
+              <BenefitChip icon="flash-outline"       label="Better Efficiency" />
+              <BenefitChip icon="construct-outline"   label="Free Service" />
             </View>
 
             <View style={styles.enrollDivider} />
 
-            <AppText variant="caption" color={colors.textSecondary} style={styles.enrollFooter}>
-              Your usage and feedback will help fine-tune this technology and explore
-              additional value for hard-water users.{'\n'}
-              <AppText variant="caption" color={colors.primary}>— Team V-Guard</AppText>
+            <AppText variant="caption" color={colors.textSecondary} style={styles.enrollNote}>
+              Your usage and feedback will help fine-tune this technology and
+              explore additional value for hard-water users.
+            </AppText>
+            <AppText variant="caption" color={colors.primary} style={styles.teamTag}>
+              — Team V-Guard
             </AppText>
           </View>
 
@@ -158,8 +142,8 @@ export default function EntryScreen() {
             <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
             <AppText variant="caption" color={colors.textSecondary} style={styles.noteText}>
               Scale formation depends on local water chemistry and usage patterns.
-              Lab testing showed strong results — but real homes vary. This trial
-              helps us quantify real-world effectiveness.
+              Lab testing showed a strong reduction in scale impact in very hard
+              water — but real homes vary.
             </AppText>
           </View>
 
@@ -173,7 +157,7 @@ export default function EntryScreen() {
               {/* Name */}
               <View style={styles.formRow}>
                 <View style={styles.fieldIcon}>
-                  <Ionicons name="person-outline" size={17} color={colors.textSecondary} />
+                  <Ionicons name="person-outline" size={17} color={colors.primaryDark} />
                 </View>
                 <View style={styles.fieldBody}>
                   <AppText variant="caption" style={styles.fieldLabel}>Full Name</AppText>
@@ -195,7 +179,7 @@ export default function EntryScreen() {
               {/* Phone */}
               <View style={styles.formRow}>
                 <View style={styles.fieldIcon}>
-                  <Ionicons name="call-outline" size={17} color={colors.textSecondary} />
+                  <Ionicons name="call-outline" size={17} color={colors.primaryDark} />
                 </View>
                 <View style={styles.fieldBody}>
                   <AppText variant="caption" style={styles.fieldLabel}>Mobile Number</AppText>
@@ -226,11 +210,11 @@ export default function EntryScreen() {
           {/* ── CTA ── */}
           <View style={styles.ctaSection}>
             <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.82}>
-              <AppText variant="label" color={colors.white} style={styles.startBtnText}>
+              <AppText variant="label" color={colors.headerBg} style={styles.startBtnText}>
                 Start Installation
               </AppText>
               <View style={styles.startBtnArrow}>
-                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                <Ionicons name="arrow-forward" size={18} color={colors.white} />
               </View>
             </TouchableOpacity>
           </View>
@@ -247,11 +231,22 @@ export default function EntryScreen() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+function IllustrationBox({ icon, label, tint }: { icon: string; label: string; tint: string }) {
+  return (
+    <View style={illStyles.box}>
+      <Ionicons name={icon as any} size={30} color={tint} />
+      <AppText variant="caption2" color={tint} style={illStyles.label}>{label}</AppText>
+    </View>
+  );
+}
+
 function BenefitChip({ icon, label }: { icon: string; label: string }) {
   return (
     <View style={chipStyles.chip}>
-      <Ionicons name={icon as any} size={13} color={colors.primary} />
-      <AppText variant="caption2" color={colors.primary} style={chipStyles.label}>{label}</AppText>
+      <Ionicons name={icon as any} size={12} color={colors.primaryDark} />
+      <AppText variant="caption2" color={colors.primaryDark} style={chipStyles.label}>
+        {label}
+      </AppText>
     </View>
   );
 }
@@ -260,168 +255,152 @@ function FieldError({ msg }: { msg: string }) {
   return (
     <View style={errStyles.row}>
       <Ionicons name="alert-circle" size={13} color={colors.error} />
-      <AppText variant="caption" color={colors.error} style={errStyles.text}>{msg}</AppText>
+      <AppText variant="caption" color={colors.error}>{msg}</AppText>
     </View>
   );
 }
 
+const illStyles = StyleSheet.create({
+  box: {
+    alignItems:      'center',
+    gap:             spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    borderRadius:    radius.lg,
+    padding:         spacing.md,
+    minWidth:        90,
+    borderWidth:     1,
+    borderColor:     'rgba(196,122,0,0.25)',
+  },
+  label: { fontWeight: '600' },
+});
+
 const chipStyles = StyleSheet.create({
   chip: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    gap:             4,
-    backgroundColor: colors.primaryFaint,
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               4,
+    backgroundColor:   'rgba(196,122,0,0.12)',
     paddingHorizontal: spacing.sm,
     paddingVertical:   4,
-    borderRadius:    radius.pill,
+    borderRadius:      radius.pill,
+    borderWidth:       1,
+    borderColor:       'rgba(196,122,0,0.25)',
   },
-  label: { color: colors.primary, fontWeight: '500' },
+  label: { fontWeight: '500' },
 });
 
 const errStyles = StyleSheet.create({
-  row:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, paddingVertical: 4 },
-  text: {},
+  row: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+  },
 });
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: colors.background },
+  safe:   { flex: 1, backgroundColor: colors.headerBg },
   flex:   { flex: 1 },
   scroll: { flexGrow: 1, paddingBottom: spacing.xxl },
 
-  // ── Hero ──
+  // ── Dark header bar ──
+  header: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    justifyContent:    'space-between',
+    backgroundColor:   colors.headerBg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical:   spacing.md,
+  },
+  logoRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  logoBox:  {
+    width: 36, height: 36, borderRadius: radius.sm,
+    backgroundColor: 'rgba(245,166,35,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  logoName: { letterSpacing: 2 },
+  logoTag:  { letterSpacing: 1 },
+  trialPill: {
+    backgroundColor:   colors.primary,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical:   4,
+    borderRadius:      radius.pill,
+  },
+  trialText: { fontWeight: '800', letterSpacing: 1 },
+
+  // ── Amber hero ──
   hero: {
     backgroundColor:   colors.primary,
     paddingHorizontal: spacing.lg,
     paddingTop:        spacing.xl,
-    paddingBottom:     spacing.xxl + spacing.xl,
+    paddingBottom:     spacing.xxl + spacing.lg,
+    gap:               spacing.lg,
   },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems:    'center',
-    gap:           spacing.sm,
-    marginBottom:  spacing.lg,
-  },
-  brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
-  brandText: { flex: 1, letterSpacing: 1.5 },
-  trialPill: {
-    backgroundColor:   colors.accent,
-    paddingHorizontal: spacing.sm,
-    paddingVertical:   3,
-    borderRadius:      radius.pill,
-  },
-  trialText: { fontWeight: '800', letterSpacing: 0.8 },
-
-  // Illustration
   illustration: {
-    alignItems:     'center',
-    justifyContent: 'center',
-    height:         140,
-    marginBottom:   spacing.lg,
-    position:       'relative',
-  },
-  glowOuter: {
-    position:        'absolute',
-    width:           160, height: 160,
-    borderRadius:    80,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  glowInner: {
-    position:        'absolute',
-    width:           100, height: 100,
-    borderRadius:    50,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-  },
-  illustrationCenter: {
     flexDirection:  'row',
     alignItems:     'center',
+    justifyContent: 'center',
     gap:            spacing.md,
   },
-  heaterBox: {
-    alignItems:      'center',
-    gap:             spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius:    radius.lg,
-    padding:         spacing.md,
-    minWidth:        80,
-  },
-  cartridgeBox: {
-    backgroundColor: 'rgba(245,166,35,0.18)',
-    borderWidth:     1,
-    borderColor:     'rgba(245,166,35,0.35)',
-  },
-  heaterLabel: { textAlign: 'center' },
-  connectorLine: {
-    flexDirection: 'row',
-    alignItems:    'center',
-    gap:           3,
-  },
-  connectorDot: {
-    width: 5, height: 5, borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  connectorTrack: {
-    width:           24, height: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  statChip: {
-    position:          'absolute',
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               4,
-    backgroundColor:   'rgba(255,255,255,0.12)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical:   4,
-    borderRadius:      radius.pill,
-  },
-  statChipLeft:  { bottom: 8, left: 0 },
-  statChipRight: { bottom: 8, right: 0 },
-  statText: { fontSize: 11 },
-
+  connector:  { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  connDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primaryDark },
+  connLine:   { width: 20, height: 2, backgroundColor: colors.primaryDark, opacity: 0.4 },
   heroTitle: {
-    color:      colors.white,
-    lineHeight: 34,
+    color:       colors.headerBg,
+    lineHeight:  34,
   },
+  heroSub: { color: colors.primaryDark },
 
-  // ── Enrollment card — FIRST ──
+  // ── Enrollment card ──
   enrollCard: {
-    backgroundColor:   colors.surface,
-    borderRadius:      radius.xl,
-    marginHorizontal:  spacing.lg,
-    marginTop:         -spacing.xl,
-    padding:           spacing.lg,
+    backgroundColor:  colors.surface,
+    borderRadius:     radius.xl,
+    marginHorizontal: spacing.lg,
+    marginTop:        -spacing.xl,
+    padding:          spacing.lg,
     ...shadows.md,
-    borderWidth:       0.5,
-    borderColor:       colors.borderOpaque,
+    borderTopWidth:   3,
+    borderTopColor:   colors.primary,
+    borderLeftWidth:  0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
   },
-  enrollHeader: {
+  enrollTop: {
     flexDirection:  'row',
     alignItems:     'center',
     gap:            spacing.md,
     marginBottom:   spacing.md,
   },
   enrollIconRing: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 46, height: 46, borderRadius: 23,
     backgroundColor: colors.primaryFaint,
-    alignItems:      'center',
-    justifyContent:  'center',
     borderWidth:     2,
     borderColor:     colors.primary,
+    alignItems:      'center',
+    justifyContent:  'center',
   },
-  enrollTitle:   { flex: 1 },
+  enrollTitleBlock: { flex: 1 },
+  enrollTitle:      {},
   enrollMsg: {
-    color:      colors.textSecondary,
-    lineHeight: 24,
+    color:        colors.textSecondary,
+    lineHeight:   24,
     marginBottom: spacing.md,
   },
-  enrollBold: { color: colors.primary, fontWeight: '600' },
+  enrollBold: { color: colors.primaryDark, fontWeight: '600' },
   benefitRow: {
-    flexDirection: 'row',
-    flexWrap:      'wrap',
-    gap:           spacing.sm,
-    marginBottom:  spacing.md,
+    flexDirection:  'row',
+    flexWrap:       'wrap',
+    gap:            spacing.sm,
+    marginBottom:   spacing.md,
   },
-  enrollDivider: { height: 0.5, backgroundColor: colors.borderOpaque, marginBottom: spacing.md },
-  enrollFooter:  { lineHeight: 20 },
+  enrollDivider: {
+    height:          0.5,
+    backgroundColor: colors.borderOpaque,
+    marginBottom:    spacing.md,
+  },
+  enrollNote: { lineHeight: 20 },
+  teamTag:    { marginTop: spacing.xs, fontStyle: 'italic', fontWeight: '600' },
 
   // ── Note ──
   noteCard: {
@@ -455,7 +434,7 @@ const styles = StyleSheet.create({
   },
   fieldIcon: {
     width: 32, height: 32, borderRadius: radius.sm,
-    backgroundColor: colors.fillTertiary,
+    backgroundColor: colors.primaryFaint,
     alignItems: 'center', justifyContent: 'center',
   },
   fieldBody:  { flex: 1 },
@@ -471,18 +450,18 @@ const styles = StyleSheet.create({
   // ── CTA ──
   ctaSection: { paddingHorizontal: spacing.lg, marginTop: spacing.xl },
   startBtn: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    justifyContent:  'center',
-    backgroundColor: colors.primary,
-    borderRadius:    radius.xl,
-    paddingVertical: spacing.md + 2,
+    flexDirection:    'row',
+    alignItems:       'center',
+    justifyContent:   'center',
+    backgroundColor:  colors.primary,
+    borderRadius:     radius.xl,
+    paddingVertical:  spacing.md + 2,
     ...shadows.md,
   },
   startBtnText:  { fontSize: 17, letterSpacing: -0.2 },
   startBtnArrow: {
     marginLeft:      spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.primaryDark,
     width: 28, height: 28, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
