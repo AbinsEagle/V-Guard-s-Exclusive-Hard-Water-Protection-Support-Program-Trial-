@@ -409,9 +409,12 @@ const styles = StyleSheet.create({
     gap:               spacing.sm,
     marginHorizontal:  spacing.lg,
     marginTop:         spacing.md,
-    backgroundColor:   colors.fillTertiary,
+    backgroundColor:   colors.surface,
     borderRadius:      radius.lg,
     padding:           spacing.md,
+    borderWidth:       0.5,
+    borderColor:       colors.borderOpaque,
+    ...shadows.xs,
   },
   noteText: { flex: 1, lineHeight: 18 },
 
