@@ -333,7 +333,7 @@ export default function CustomerFormScreen() {
 
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-            <AppText variant="label" color={colors.white}>Continue to Photos</AppText>
+            <AppText variant="label" color={colors.headerBg}>Continue to Photos</AppText>
             <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
           </TouchableOpacity>
 
@@ -349,9 +349,9 @@ function SectionHeader({ title, icon }: { title: string; icon: string }) {
   return (
     <View style={sectionStyles.row}>
       <View style={sectionStyles.iconBox}>
-        <Ionicons name={icon as any} size={14} color={colors.primary} />
+        <Ionicons name={icon as any} size={14} color={colors.white} />
       </View>
-      <AppText variant="sectionTitle" color={colors.primary}>{title}</AppText>
+      <AppText variant="sectionTitle" color={colors.white}>{title}</AppText>
     </View>
   );
 }
@@ -400,12 +400,12 @@ function AutoField({ icon, label, value, status, onRetry }: {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {
@@ -450,7 +450,7 @@ const sectionStyles = StyleSheet.create({
   },
   iconBox: {
     width: 24, height: 24, borderRadius: 6,
-    backgroundColor: colors.primaryFaint,
+    backgroundColor: colors.headerBg,
     alignItems: 'center', justifyContent: 'center',
   },
 });

@@ -165,7 +165,7 @@ export default function PhotosScreen() {
           disabled={!bothCaptured}
           activeOpacity={0.85}
         >
-          <AppText variant="label" color={colors.white}>Review & Submit</AppText>
+          <AppText variant="label" color={colors.headerBg}>Review & Submit</AppText>
           <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
         </TouchableOpacity>
 
@@ -229,11 +229,11 @@ function PhotoCard({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {

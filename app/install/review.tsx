@@ -127,8 +127,8 @@ function Section({ title, icon, children }: {
   return (
     <View style={secStyles.wrapper}>
       <View style={secStyles.titleRow}>
-        <Ionicons name={icon as any} size={14} color={colors.primary} />
-        <AppText variant="sectionTitle" color={colors.primary}>{title}</AppText>
+        <Ionicons name={icon as any} size={14} color={colors.white} />
+        <AppText variant="sectionTitle" color={colors.textSecondary}>{title}</AppText>
       </View>
       <View style={secStyles.card}>{children}</View>
     </View>
@@ -161,11 +161,11 @@ function PhotoThumb({ label, uri }: { label: string; uri: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {

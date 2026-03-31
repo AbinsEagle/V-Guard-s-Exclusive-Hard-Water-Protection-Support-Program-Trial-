@@ -71,8 +71,8 @@ export default function SuccessScreen() {
 
         {/* Actions */}
         <TouchableOpacity style={styles.primaryBtn} onPress={handleNewInstallation}>
-          <Ionicons name="add-circle-outline" size={20} color={colors.white} />
-          <AppText variant="label" color={colors.white} style={{ marginLeft: spacing.sm }}>
+          <Ionicons name="add-circle-outline" size={20} color={colors.headerBg} />
+          <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
             New Installation
           </AppText>
         </TouchableOpacity>
@@ -135,9 +135,10 @@ const styles = StyleSheet.create({
   },
   summaryDivider: { height: 1, backgroundColor: colors.border },
   nextStepsCard: {
-    width: '100%', backgroundColor: colors.primaryFaint,
+    width: '100%', backgroundColor: colors.surface,
     borderRadius: 16, padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1, borderColor: colors.borderOpaque,
   },
   nextTitle: { marginBottom: spacing.xs },
   primaryBtn: {
@@ -159,11 +160,11 @@ const nsStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   numberCircle: {
     width: 22, height: 22, borderRadius: 11,
-    backgroundColor: colors.primaryFaint,
-    borderWidth: 1.5, borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    borderWidth: 1.5, borderColor: colors.primaryDark,
     alignItems: 'center', justifyContent: 'center',
     marginTop: 1,
   },
-  number: { fontWeight: '700', fontSize: 11 },
+  number: { fontWeight: '700', fontSize: 11, color: colors.headerBg },
   text: { flex: 1, lineHeight: 18 },
 });

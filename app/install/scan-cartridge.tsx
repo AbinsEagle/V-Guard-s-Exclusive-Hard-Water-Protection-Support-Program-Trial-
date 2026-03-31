@@ -121,7 +121,7 @@ export default function ScanCartridgeScreen() {
         </View>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-          <AppText variant="label" color={colors.white}>Continue to Customer Details</AppText>
+          <AppText variant="label" color={colors.headerBg}>Continue to Customer Details</AppText>
           <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
         </TouchableOpacity>
 
@@ -131,14 +131,14 @@ export default function ScanCartridgeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {

@@ -152,7 +152,7 @@ export default function ScanHeaterScreen() {
               </AppText>
             ) : null}
             <TouchableOpacity style={styles.primaryBtn} onPress={handleManualSubmit}>
-              <AppText variant="label" color={colors.white}>Confirm & Continue</AppText>
+              <AppText variant="label" color={colors.headerBg}>Confirm & Continue</AppText>
             </TouchableOpacity>
             {Platform.OS !== 'web' && (
               <TouchableOpacity onPress={() => setUseManual(false)}>
@@ -172,14 +172,14 @@ const CORNER = 20;
 const CORNER_THICK = 3;
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {

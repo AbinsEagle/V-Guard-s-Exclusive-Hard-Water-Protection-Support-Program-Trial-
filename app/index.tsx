@@ -76,13 +76,13 @@ export default function EntryScreen() {
           <View style={styles.hero}>
             {/* Illustration cluster */}
             <View style={styles.illustration}>
-              <IllustrationBox icon="water"            label="Heater"      tint={colors.primaryDark} />
+              <IllustrationBox icon="water"            label="Heater"      tint={colors.headerBg} />
               <View style={styles.connector}>
                 <View style={styles.connDot} />
                 <View style={styles.connLine} />
                 <View style={styles.connDot} />
               </View>
-              <IllustrationBox icon="shield-checkmark" label="Anti-Scalant" tint={colors.primaryDark} />
+              <IllustrationBox icon="shield-checkmark" label="Anti-Scalant" tint={colors.headerBg} />
             </View>
 
             <AppText variant="h2" color={colors.headerBg} style={styles.heroTitle}>
@@ -243,8 +243,8 @@ function IllustrationBox({ icon, label, tint }: { icon: string; label: string; t
 function BenefitChip({ icon, label }: { icon: string; label: string }) {
   return (
     <View style={chipStyles.chip}>
-      <Ionicons name={icon as any} size={12} color={colors.primaryDark} />
-      <AppText variant="caption2" color={colors.primaryDark} style={chipStyles.label}>
+      <Ionicons name={icon as any} size={12} color={colors.headerBg} />
+      <AppText variant="caption2" color={colors.headerBg} style={chipStyles.label}>
         {label}
       </AppText>
     </View>
@@ -279,12 +279,12 @@ const chipStyles = StyleSheet.create({
     flexDirection:     'row',
     alignItems:        'center',
     gap:               4,
-    backgroundColor:   'rgba(196,122,0,0.12)',
+    backgroundColor:   'rgba(26,26,26,0.10)',
     paddingHorizontal: spacing.sm,
     paddingVertical:   4,
     borderRadius:      radius.pill,
     borderWidth:       1,
-    borderColor:       'rgba(196,122,0,0.25)',
+    borderColor:       'rgba(26,26,26,0.20)',
   },
   label: { fontWeight: '500' },
 });
@@ -344,13 +344,13 @@ const styles = StyleSheet.create({
     gap:            spacing.md,
   },
   connector:  { alignItems: 'center', flexDirection: 'row', gap: 4 },
-  connDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primaryDark },
-  connLine:   { width: 20, height: 2, backgroundColor: colors.primaryDark, opacity: 0.4 },
+  connDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.headerBg },
+  connLine:   { width: 20, height: 2, backgroundColor: colors.headerBg, opacity: 0.4 },
   heroTitle: {
     color:       colors.headerBg,
     lineHeight:  34,
   },
-  heroSub: { color: colors.primaryDark },
+  heroSub: { color: colors.headerBg },
 
   // ── Enrollment card ──
   enrollCard: {
