@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing } from '../../src/theme';
+import { colors, spacing, radius, shadows } from '../../src/theme';
 
 export default function SuccessScreen() {
   const { data, reset } = useInstallation();
@@ -18,33 +18,31 @@ export default function SuccessScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.container}>
 
-        {/* Success icon */}
-        <View style={styles.iconWrapper}>
-          <View style={styles.iconOuter}>
-            <View style={styles.iconInner}>
-              <Ionicons name="checkmark" size={48} color={colors.white} />
-            </View>
+        {/* ── Success icon ── */}
+        <View style={styles.iconOuter}>
+          <View style={styles.iconInner}>
+            <Ionicons name="checkmark" size={36} color={colors.white} />
           </View>
         </View>
 
-        {/* Message */}
-        <AppText variant="h2" style={styles.title}>
-          Installation Recorded!
-        </AppText>
-        <AppText variant="body" color={colors.textSecondary} style={styles.subtitle}>
-          The anti-scalant unit has been successfully linked and the installation record has been saved.
-        </AppText>
+        {/* ── Message ── */}
+        <View style={styles.messageBlock}>
+          <AppText variant="h2" style={styles.title}>Installation Recorded!</AppText>
+          <AppText variant="subhead" color={colors.textSecondary} style={styles.subtitle}>
+            Anti-scalant unit linked and record saved successfully.
+          </AppText>
+        </View>
 
-        {/* Summary card */}
+        {/* ── Summary card ── */}
         <View style={styles.summaryCard}>
-          <SummaryRow icon="water" label="Heater" value={data.heaterSerialNumber} />
-          <View style={styles.summaryDivider} />
-          <SummaryRow icon="cube" label="Cartridge" value={data.cartridgeNumber} />
-          <View style={styles.summaryDivider} />
-          <SummaryRow icon="person" label="Customer" value={`+91 ${data.customerWhatsApp}`} />
-          <View style={styles.summaryDivider} />
+          <SummaryRow icon="flame-outline"   label="Heater"    value={data.heaterSerialNumber} />
+          <View style={styles.divider} />
+          <SummaryRow icon="cube-outline"    label="Cartridge" value={data.cartridgeNumber} />
+          <View style={styles.divider} />
+          <SummaryRow icon="logo-whatsapp"   label="Customer"  value={`+91 ${data.customerWhatsApp}`} />
+          <View style={styles.divider} />
           <SummaryRow
-            icon="calendar"
+            icon="calendar-outline"
             label="Date"
             value={new Date(data.installationDate).toLocaleDateString('en-IN', {
               day: 'numeric', month: 'short', year: 'numeric',
@@ -52,32 +50,23 @@ export default function SuccessScreen() {
           />
         </View>
 
-        {/* Next steps */}
-        <View style={styles.nextStepsCard}>
+        {/* ── What happens next ── */}
+        <View style={styles.nextCard}>
           <AppText variant="label" style={styles.nextTitle}>What happens next?</AppText>
-          <NextStep
-            number="1"
-            text="Customer will receive a WhatsApp confirmation of enrollment"
-          />
-          <NextStep
-            number="2"
-            text="A follow-up survey will be sent every 2 months to track effectiveness"
-          />
-          <NextStep
-            number="3"
-            text="R&D team will monitor all data on the dashboard"
-          />
+          <NextStep number="1" text="Customer receives WhatsApp enrollment confirmation" />
+          <NextStep number="2" text="Survey sent every 2 months to track effectiveness" />
+          <NextStep number="3" text="R&D monitors all data on the dashboard" />
         </View>
 
-        {/* Actions */}
+        {/* ── Actions ── */}
         <TouchableOpacity style={styles.primaryBtn} onPress={handleNewInstallation}>
-          <Ionicons name="add-circle-outline" size={20} color={colors.headerBg} />
+          <Ionicons name="add-circle-outline" size={18} color={colors.headerBg} />
           <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
             New Installation
           </AppText>
         </TouchableOpacity>
 
-        <AppText variant="caption" color={colors.textHint} style={styles.footer}>
+        <AppText variant="caption2" color={colors.textTertiary} style={styles.footer}>
           V-Guard R&D · Hard Water Protection Trial
         </AppText>
 
@@ -86,12 +75,14 @@ export default function SuccessScreen() {
   );
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
 function SummaryRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={sumStyles.row}>
-      <Ionicons name={icon as any} size={16} color={colors.primary} />
+      <Ionicons name={icon as any} size={14} color={colors.primary} />
       <AppText variant="caption" color={colors.textSecondary} style={sumStyles.label}>{label}</AppText>
-      <AppText variant="label" numberOfLines={1} style={sumStyles.value}>{value}</AppText>
+      <AppText variant="label" numberOfLines={1} style={sumStyles.value}>{value || '—'}</AppText>
     </View>
   );
 }
@@ -99,72 +90,93 @@ function SummaryRow({ icon, label, value }: { icon: string; label: string; value
 function NextStep({ number, text }: { number: string; text: string }) {
   return (
     <View style={nsStyles.row}>
-      <View style={nsStyles.numberCircle}>
-        <AppText variant="caption" color={colors.primary} style={nsStyles.number}>{number}</AppText>
+      <View style={nsStyles.circle}>
+        <AppText variant="caption2" style={nsStyles.number}>{number}</AppText>
       </View>
       <AppText variant="caption" color={colors.textSecondary} style={nsStyles.text}>{text}</AppText>
     </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe:      { flex: 1, backgroundColor: colors.background },
   container: {
-    flex: 1, alignItems: 'center',
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.xl,
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
   },
-  iconWrapper: { marginTop: spacing.xl, marginBottom: spacing.sm },
+
+  // Icon
   iconOuter: {
-    width: 110, height: 110, borderRadius: 55,
+    width: 80, height: 80, borderRadius: 40,
     backgroundColor: colors.successLight,
     alignItems: 'center', justifyContent: 'center',
   },
   iconInner: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 58, height: 58, borderRadius: 29,
     backgroundColor: colors.success,
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { textAlign: 'center' },
-  subtitle: { textAlign: 'center', lineHeight: 22, paddingHorizontal: spacing.md },
+
+  // Message
+  messageBlock: { alignItems: 'center', gap: spacing.xs },
+  title:    { textAlign: 'center' },
+  subtitle: { textAlign: 'center', lineHeight: 20 },
+
+  // Summary
   summaryCard: {
-    width: '100%', backgroundColor: colors.surface,
-    borderRadius: 16, padding: spacing.md,
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg, padding: spacing.md,
     borderWidth: 1, borderColor: colors.border,
     gap: spacing.xs,
+    ...shadows.sm,
   },
-  summaryDivider: { height: 1, backgroundColor: colors.border },
-  nextStepsCard: {
-    width: '100%', backgroundColor: colors.surface,
-    borderRadius: 16, padding: spacing.md,
+  divider: { height: 0.5, backgroundColor: colors.borderOpaque },
+
+  // Next steps
+  nextCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg, padding: spacing.md,
     gap: spacing.sm,
-    borderWidth: 1, borderColor: colors.borderOpaque,
+    borderWidth: 1, borderColor: colors.border,
+    ...shadows.sm,
   },
-  nextTitle: { marginBottom: spacing.xs },
+  nextTitle: { marginBottom: spacing.xs / 2 },
+
+  // CTA
   primaryBtn: {
-    width: '100%', flexDirection: 'row',
-    backgroundColor: colors.primary, borderRadius: 14,
-    paddingVertical: spacing.md, alignItems: 'center', justifyContent: 'center',
-    marginTop: spacing.sm,
+    width: '100%',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg, paddingVertical: spacing.md,
+    ...shadows.md,
+    marginTop: 'auto',
   },
-  footer: { marginTop: 'auto' },
+
+  footer: { textAlign: 'center', marginTop: spacing.xs },
 });
 
 const sumStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
+  row:   { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
   label: { flex: 1 },
   value: { flex: 2, textAlign: 'right' },
 });
 
 const nsStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  numberCircle: {
-    width: 22, height: 22, borderRadius: 11,
+  circle: {
+    width: 20, height: 20, borderRadius: 10,
     backgroundColor: colors.primary,
-    borderWidth: 1.5, borderColor: colors.primaryDark,
     alignItems: 'center', justifyContent: 'center',
-    marginTop: 1,
+    marginTop: 1, flexShrink: 0,
   },
-  number: { fontWeight: '700', fontSize: 11, color: colors.headerBg },
-  text: { flex: 1, lineHeight: 18 },
+  number: { fontWeight: '800', color: colors.headerBg, fontSize: 10 },
+  text:   { flex: 1, lineHeight: 18 },
 });

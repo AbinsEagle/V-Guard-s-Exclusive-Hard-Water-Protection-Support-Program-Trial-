@@ -4,7 +4,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -16,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing } from '../../src/theme';
+import { colors, spacing, radius } from '../../src/theme';
 import { WaterSource } from '../../src/types';
 
 const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
@@ -143,24 +142,33 @@ export default function CustomerFormScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* ── Auto-captured ── */}
-          <SectionHeader title="Auto-Captured" icon="flash" />
-          <View style={styles.autoRow}>
-            <AutoField
-              icon="calendar-outline"
-              label="Date"
-              value={new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-            />
-            <AutoField
-              icon="location-outline"
-              label="GPS Location"
-              value={
-                gpsStatus === 'fetching' ? 'Fetching...' :
-                gpsStatus === 'done' ? gpsLabel || 'Captured' :
-                gpsStatus === 'error' ? 'Unavailable' : 'Pending'
-              }
-              status={gpsStatus}
-              onRetry={fetchLocation}
-            />
+          <View style={styles.autoPillRow}>
+            <View style={styles.autoPill}>
+              <Ionicons name="calendar-outline" size={13} color={colors.primaryDark} />
+              <AppText variant="caption2" color={colors.primaryDark} style={styles.autoPillText}>
+                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </AppText>
+            </View>
+            <TouchableOpacity
+              style={[styles.autoPill, gpsStatus === 'error' && styles.autoPillError]}
+              onPress={gpsStatus === 'error' ? fetchLocation : undefined}
+              activeOpacity={gpsStatus === 'error' ? 0.7 : 1}
+            >
+              <Ionicons
+                name={gpsStatus === 'done' ? 'location' : 'location-outline'}
+                size={13}
+                color={gpsStatus === 'error' ? colors.error : colors.primaryDark}
+              />
+              <AppText
+                variant="caption2"
+                color={gpsStatus === 'error' ? colors.error : colors.primaryDark}
+                style={styles.autoPillText}
+              >
+                {gpsStatus === 'fetching' ? 'Getting GPS…' :
+                 gpsStatus === 'done'     ? (gpsLabel || 'GPS Captured') :
+                 gpsStatus === 'error'    ? 'Tap to retry' : 'GPS pending'}
+              </AppText>
+            </TouchableOpacity>
           </View>
 
           {/* ── Customer ── */}
@@ -207,7 +215,7 @@ export default function CustomerFormScreen() {
                 >
                   <AppText
                     variant="caption"
-                    color={waterSource === s.value ? colors.primary : colors.textSecondary}
+                    color={waterSource === s.value ? colors.headerBg : colors.textSecondary}
                     style={waterSource === s.value ? styles.chipTextSelected : undefined}
                   >
                     {s.label}
@@ -334,7 +342,9 @@ export default function CustomerFormScreen() {
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
             <AppText variant="label" color={colors.headerBg}>Continue to Photos</AppText>
-            <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
+            <View style={styles.btnArrow}>
+              <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            </View>
           </TouchableOpacity>
 
         </ScrollView>
@@ -351,7 +361,7 @@ function SectionHeader({ title, icon }: { title: string; icon: string }) {
       <View style={sectionStyles.iconBox}>
         <Ionicons name={icon as any} size={14} color={colors.white} />
       </View>
-      <AppText variant="sectionTitle" color={colors.white}>{title}</AppText>
+      <AppText variant="sectionTitle" color={colors.textPrimary}>{title}</AppText>
     </View>
   );
 }
@@ -370,34 +380,7 @@ function Field({ label, required, error, children }: {
   );
 }
 
-function AutoField({ icon, label, value, status, onRetry }: {
-  icon: string; label: string; value: string;
-  status?: 'idle' | 'fetching' | 'done' | 'error';
-  onRetry?: () => void;
-}) {
-  return (
-    <View style={autoStyles.card}>
-      <View style={autoStyles.iconBox}>
-        {status === 'fetching'
-          ? <ActivityIndicator size="small" color={colors.primary} />
-          : <Ionicons name={icon as any} size={18} color={
-              status === 'done' ? colors.success :
-              status === 'error' ? colors.error : colors.primary
-            } />
-        }
-      </View>
-      <AppText variant="caption" color={colors.textSecondary}>{label}</AppText>
-      <AppText variant="label" numberOfLines={1}>{value}</AppText>
-      {status === 'error' && onRetry && (
-        <TouchableOpacity onPress={onRetry}>
-          <AppText variant="caption" color={colors.primary} style={{ textDecorationLine: 'underline' }}>
-            Retry
-          </AppText>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}
+
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
@@ -414,7 +397,19 @@ const styles = StyleSheet.create({
     padding: spacing.lg, paddingBottom: spacing.xxl,
     gap: spacing.sm,
   },
-  autoRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  autoPillRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  autoPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: colors.primaryFaint,
+    paddingHorizontal: spacing.sm, paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    borderWidth: 1, borderColor: 'rgba(196,122,0,0.25)',
+  },
+  autoPillError: {
+    backgroundColor: colors.errorLight,
+    borderColor: colors.error,
+  },
+  autoPillText: { fontWeight: '600' },
   inputBox: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: 1.5, borderColor: colors.border,
@@ -441,6 +436,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginTop: spacing.md,
   },
+  btnArrow: {
+    marginLeft: spacing.md,
+    backgroundColor: colors.primaryDark,
+    width: 26, height: 26, borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
+  },
 });
 
 const sectionStyles = StyleSheet.create({
@@ -461,16 +462,3 @@ const fieldStyles = StyleSheet.create({
   error: { marginTop: 4 },
 });
 
-const autoStyles = StyleSheet.create({
-  card: {
-    flex: 1, backgroundColor: colors.surface,
-    borderRadius: 14, padding: spacing.md,
-    alignItems: 'center', gap: spacing.xs,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  iconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center',
-  },
-});

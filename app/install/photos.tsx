@@ -3,8 +3,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  ScrollView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -14,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing } from '../../src/theme';
+import { colors, spacing, radius, shadows } from '../../src/theme';
 
 const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
 
@@ -30,7 +28,7 @@ export default function PhotosScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [photos, setPhotos] = useState<PhotoState>({
     front: data.frontPhotoUri,
-    side: data.sidePhotoUri,
+    side:  data.sidePhotoUri,
   });
   const [activeSlot, setActiveSlot] = useState<PhotoSlot | null>(null);
   const cameraRef = useRef<CameraView>(null);
@@ -48,11 +46,10 @@ export default function PhotosScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.7, base64: false });
       if (photo) {
-        const uri = photo.uri;
-        setPhotos((prev) => ({ ...prev, [activeSlot]: uri }));
+        setPhotos((prev) => ({ ...prev, [activeSlot]: photo.uri }));
         setActiveSlot(null);
       }
-    } catch (e) {
+    } catch {
       setActiveSlot(null);
     }
   };
@@ -62,9 +59,9 @@ export default function PhotosScreen() {
     router.push('/install/review');
   };
 
-  const bothCaptured = photos.front && photos.side;
+  const bothCaptured = !!(photos.front && photos.side);
 
-  // ── Camera view ──
+  // ── Full-screen camera ──
   if (activeSlot && permission?.granted) {
     return (
       <View style={styles.cameraScreen}>
@@ -75,21 +72,20 @@ export default function PhotosScreen() {
                 <Ionicons name="close" size={26} color={colors.white} />
               </TouchableOpacity>
               <View style={styles.cameraBadge}>
-                <AppText variant="label" color={colors.white}>
-                  {activeSlot === 'front' ? '📸 Front View' : '📸 Side View'}
+                <Ionicons name="camera" size={13} color={colors.white} />
+                <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
+                  {activeSlot === 'front' ? 'Front View' : 'Side View'}
                 </AppText>
               </View>
               <View style={{ width: 40 }} />
             </View>
-
             <View style={styles.cameraGuide}>
               <AppText variant="caption" color={colors.white} style={styles.cameraGuideText}>
                 {activeSlot === 'front'
-                  ? 'Capture the anti-scalant unit from the front'
-                  : 'Capture the anti-scalant unit from the side'}
+                  ? 'Capture anti-scalant unit — front face'
+                  : 'Capture anti-scalant unit — side profile'}
               </AppText>
             </View>
-
             <View style={styles.cameraControls}>
               <TouchableOpacity style={styles.captureBtn} onPress={takePhoto}>
                 <View style={styles.captureBtnInner} />
@@ -113,63 +109,58 @@ export default function PhotosScreen() {
 
       <StepIndicator currentStep={5} totalSteps={6} labels={STEP_LABELS} />
 
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      {/* Body — no scroll */}
+      <View style={styles.body}>
 
-        <AppText variant="body" color={colors.textSecondary} style={styles.instruction}>
-          Take two photos of the anti-scalant unit fitted on the water heater — front view and side view.
+        <AppText variant="caption" color={colors.textSecondary} style={styles.instruction}>
+          Two photos required — front and side view of the fitted anti-scalant unit.
         </AppText>
 
-        {/* Front Photo */}
-        <PhotoCard
-          slot="front"
-          label="Front View"
-          description="Face of the anti-scalant unit on the heater"
-          photoUri={photos.front}
-          onCapture={() => openCamera('front')}
-          onRetake={() => openCamera('front')}
-        />
+        {/* Side-by-side photo cards — key no-scroll layout */}
+        <View style={styles.photoRow}>
+          <PhotoCard
+            slot="front"
+            label="Front View"
+            hint="Face of unit"
+            photoUri={photos.front}
+            onCapture={() => openCamera('front')}
+            onRetake={() => openCamera('front')}
+          />
+          <PhotoCard
+            slot="side"
+            label="Side View"
+            hint="Side profile"
+            photoUri={photos.side}
+            onCapture={() => openCamera('side')}
+            onRetake={() => openCamera('side')}
+          />
+        </View>
 
-        {/* Side Photo */}
-        <PhotoCard
-          slot="side"
-          label="Side View"
-          description="Side profile showing the connection point"
-          photoUri={photos.side}
-          onCapture={() => openCamera('side')}
-          onRetake={() => openCamera('side')}
-        />
-
-        {/* Progress hint */}
-        {!bothCaptured && (
-          <View style={styles.hintBox}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.info} />
-            <AppText variant="caption" color={colors.info} style={styles.hintText}>
-              Both photos are required to proceed
+        {/* Status indicators */}
+        <View style={styles.statusRow}>
+          <StatusDot captured={!!photos.front} label="Front" />
+          <StatusDot captured={!!photos.side}  label="Side" />
+          {!bothCaptured && (
+            <AppText variant="caption2" color={colors.textTertiary} style={styles.statusHint}>
+              Both required to proceed
             </AppText>
-          </View>
-        )}
+          )}
+        </View>
 
-        {/* Web fallback note */}
-        {Platform.OS === 'web' && !bothCaptured && (
-          <View style={styles.webNote}>
-            <Ionicons name="desktop-outline" size={16} color={colors.textSecondary} />
-            <AppText variant="caption" color={colors.textSecondary} style={styles.hintText}>
-              On desktop, use your device camera or upload photos directly
-            </AppText>
-          </View>
-        )}
-
+        {/* CTA */}
         <TouchableOpacity
           style={[styles.primaryBtn, !bothCaptured && styles.primaryBtnDisabled]}
           onPress={handleContinue}
           disabled={!bothCaptured}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
         >
           <AppText variant="label" color={colors.headerBg}>Review & Submit</AppText>
-          <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
+          <View style={styles.btnArrow}>
+            <Ionicons name="arrow-forward" size={16} color={colors.white} />
+          </View>
         </TouchableOpacity>
 
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -177,56 +168,69 @@ export default function PhotosScreen() {
 // ─── Photo Card ───────────────────────────────────────────────────────────────
 
 function PhotoCard({
-  slot, label, description, photoUri, onCapture, onRetake,
+  slot, label, hint, photoUri, onCapture, onRetake,
 }: {
   slot: PhotoSlot;
   label: string;
-  description: string;
+  hint: string;
   photoUri: string | null;
   onCapture: () => void;
   onRetake: () => void;
 }) {
   return (
     <View style={cardStyles.card}>
-      <View style={cardStyles.cardHeader}>
-        <View style={cardStyles.badge}>
-          <AppText variant="caption" color={colors.primary} style={cardStyles.badgeText}>
+      {/* Card header */}
+      <View style={cardStyles.header}>
+        <View style={cardStyles.labelBadge}>
+          <AppText variant="caption2" color={colors.headerBg} style={cardStyles.labelText}>
             {label}
           </AppText>
         </View>
-        {photoUri && (
-          <View style={cardStyles.doneBadge}>
-            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-            <AppText variant="caption" color={colors.success}>Captured</AppText>
-          </View>
-        )}
+        {photoUri
+          ? <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+          : <Ionicons name="ellipse-outline"  size={16} color={colors.borderOpaque} />
+        }
       </View>
-      <AppText variant="caption" color={colors.textSecondary} style={cardStyles.desc}>
-        {description}
-      </AppText>
 
+      {/* Photo or capture zone */}
       {photoUri ? (
         <View style={cardStyles.previewWrapper}>
           <Image source={{ uri: photoUri }} style={cardStyles.preview} resizeMode="cover" />
           <TouchableOpacity style={cardStyles.retakeBtn} onPress={onRetake}>
-            <Ionicons name="camera-reverse-outline" size={16} color={colors.white} />
-            <AppText variant="caption" color={colors.white} style={{ marginLeft: 4 }}>Retake</AppText>
+            <Ionicons name="camera-reverse-outline" size={14} color={colors.white} />
+            <AppText variant="caption2" color={colors.white} style={{ marginLeft: 3 }}>Retake</AppText>
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity style={cardStyles.captureArea} onPress={onCapture} activeOpacity={0.8}>
-          <Ionicons name="camera-outline" size={36} color={colors.primaryLight} />
-          <AppText variant="label" color={colors.primary} style={{ marginTop: spacing.sm }}>
-            Tap to Take Photo
+        <TouchableOpacity style={cardStyles.captureArea} onPress={onCapture} activeOpacity={0.75}>
+          <Ionicons name="camera-outline" size={28} color={colors.primary} />
+          <AppText variant="caption2" color={colors.textSecondary} style={{ marginTop: 4 }}>
+            {hint}
           </AppText>
-          <AppText variant="caption" color={colors.textHint}>
-            {slot === 'front' ? 'Front of unit' : 'Side of unit'}
+          <AppText variant="caption2" color={colors.primary} style={cardStyles.tapLabel}>
+            Tap to capture
           </AppText>
         </TouchableOpacity>
       )}
     </View>
   );
 }
+
+function StatusDot({ captured, label }: { captured: boolean; label: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <View style={{
+        width: 8, height: 8, borderRadius: 4,
+        backgroundColor: captured ? colors.success : colors.borderOpaque,
+      }} />
+      <AppText variant="caption2" color={captured ? colors.success : colors.textTertiary}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
@@ -236,56 +240,59 @@ const styles = StyleSheet.create({
     backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
+
   body: {
+    flex: 1,
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
   },
-  instruction: { lineHeight: 22, marginBottom: spacing.xs },
-  hintBox: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-    backgroundColor: colors.infoLight, borderRadius: 10,
-    padding: spacing.sm + 2,
-  },
-  webNote: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-    backgroundColor: colors.background, borderRadius: 10,
-    padding: spacing.sm,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  hintText: { flex: 1 },
+  instruction: { lineHeight: 18 },
+
+  // Side-by-side photo cards
+  photoRow:   { flex: 1, flexDirection: 'row', gap: spacing.md },
+  statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  statusHint: { marginLeft: 'auto' },
+
   primaryBtn: {
-    flexDirection: 'row', backgroundColor: colors.primary,
-    borderRadius: 14, paddingVertical: spacing.md,
-    alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg, paddingVertical: spacing.md,
+    ...shadows.sm,
   },
   primaryBtnDisabled: { opacity: 0.4 },
+  btnArrow: {
+    marginLeft: spacing.md,
+    backgroundColor: colors.primaryDark,
+    width: 26, height: 26, borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
+  },
 
   // Camera
-  cameraScreen: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
-  cameraOverlay: { flex: 1, justifyContent: 'space-between' },
+  cameraScreen:    { flex: 1, backgroundColor: '#000' },
+  camera:          { flex: 1 },
+  cameraOverlay:   { flex: 1, justifyContent: 'space-between' },
   cameraHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: spacing.md,
   },
-  cameraBack: { padding: spacing.xs },
+  cameraBack:  { padding: spacing.xs },
   cameraBadge: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
     borderRadius: 20,
   },
-  cameraGuide: {
-    alignItems: 'center', padding: spacing.md,
-  },
+  cameraGuide: { alignItems: 'center', padding: spacing.md },
   cameraGuideText: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
     borderRadius: 20, textAlign: 'center',
   },
-  cameraControls: {
-    alignItems: 'center', paddingBottom: spacing.xl,
-  },
+  cameraControls: { alignItems: 'center', paddingBottom: spacing.xl },
   captureBtn: {
     width: 72, height: 72, borderRadius: 36,
     borderWidth: 3, borderColor: colors.white,
@@ -299,37 +306,43 @@ const styles = StyleSheet.create({
 
 const cardStyles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 16, padding: spacing.md,
+    borderRadius: radius.lg,
+    padding: spacing.sm,
     borderWidth: 1, borderColor: colors.border,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: {
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  labelBadge: {
     backgroundColor: colors.primaryFaint,
-    paddingHorizontal: spacing.sm, paddingVertical: 3,
+    paddingHorizontal: spacing.sm, paddingVertical: 2,
     borderRadius: 6,
+    borderWidth: 1, borderColor: 'rgba(196,122,0,0.20)',
   },
-  badgeText: { fontWeight: '700' },
-  doneBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  desc: { lineHeight: 18 },
+  labelText: { fontWeight: '700' },
+
   captureArea: {
-    height: 160, borderRadius: 12,
-    borderWidth: 2, borderColor: colors.border,
+    flex: 1,
+    borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: colors.borderOpaque,
     borderStyle: 'dashed',
     backgroundColor: colors.background,
     alignItems: 'center', justifyContent: 'center',
-    gap: spacing.xs,
+    minHeight: 100,
+    gap: 2,
   },
-  previewWrapper: { position: 'relative' },
-  preview: {
-    width: '100%', height: 200, borderRadius: 12,
-  },
+  tapLabel: { fontWeight: '600', marginTop: 2 },
+
+  previewWrapper: { flex: 1, position: 'relative', minHeight: 100 },
+  preview: { flex: 1, borderRadius: radius.md },
   retakeBtn: {
-    position: 'absolute', bottom: spacing.sm, right: spacing.sm,
+    position: 'absolute', bottom: spacing.xs, right: spacing.xs,
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.xs,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: spacing.xs + 2, paddingVertical: 3,
+    borderRadius: radius.sm,
   },
 });

@@ -97,22 +97,22 @@ export default function ReviewScreen() {
         >
           {submitting ? (
             <>
-              <ActivityIndicator color={colors.white} size="small" />
-              <AppText variant="label" color={colors.white} style={{ marginLeft: spacing.sm }}>
+              <ActivityIndicator color={colors.headerBg} size="small" />
+              <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
                 Submitting...
               </AppText>
             </>
           ) : (
             <>
-              <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
-              <AppText variant="label" color={colors.white} style={{ marginLeft: spacing.sm }}>
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.headerBg} />
+              <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
                 Submit Installation Record
               </AppText>
             </>
           )}
         </TouchableOpacity>
 
-        <AppText variant="caption" color={colors.textHint} style={styles.disclaimer}>
+        <AppText variant="caption" color={colors.textSecondary} style={styles.disclaimer}>
           By submitting, you confirm that all details are accurate and the anti-scalant unit has been properly installed.
         </AppText>
 
@@ -127,7 +127,9 @@ function Section({ title, icon, children }: {
   return (
     <View style={secStyles.wrapper}>
       <View style={secStyles.titleRow}>
-        <Ionicons name={icon as any} size={14} color={colors.white} />
+        <View style={secStyles.iconBox}>
+          <Ionicons name={icon as any} size={12} color={colors.white} />
+        </View>
         <AppText variant="sectionTitle" color={colors.textSecondary}>{title}</AppText>
       </View>
       <View style={secStyles.card}>{children}</View>
@@ -188,6 +190,11 @@ const secStyles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
     marginTop: spacing.sm,
+  },
+  iconBox: {
+    width: 20, height: 20, borderRadius: 5,
+    backgroundColor: colors.headerBg,
+    alignItems: 'center', justifyContent: 'center',
   },
   card: {
     backgroundColor: colors.surface,

@@ -74,7 +74,7 @@ export default function ScanHeaterScreen() {
                   Allow camera access to scan the QR code on the water heater unit.
                 </AppText>
                 <TouchableOpacity style={styles.primaryBtn} onPress={requestCameraAccess}>
-                  <AppText variant="label" color={colors.white}>Allow Camera</AppText>
+                  <AppText variant="label" color={colors.headerBg}>Allow Camera</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setUseManual(true)}>
                   <AppText variant="caption" color={colors.primary} style={styles.manualLink}>
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: CORNER,
     height: CORNER,
-    borderColor: colors.accent,
+    borderColor: colors.primary,
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: CORNER_THICK, borderLeftWidth: CORNER_THICK },
   cornerTR: { top: 0, right: 0, borderTopWidth: CORNER_THICK, borderRightWidth: CORNER_THICK },
@@ -257,13 +257,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.primaryFaint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   manualTitle: { textAlign: 'center' },
   manualDesc: { textAlign: 'center', lineHeight: 22 },
@@ -297,6 +297,5 @@ const styles = StyleSheet.create({
   },
   manualLink: {
     marginTop: spacing.sm,
-    textDecorationLine: 'underline',
   },
 });
