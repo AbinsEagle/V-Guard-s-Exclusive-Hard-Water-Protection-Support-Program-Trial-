@@ -141,6 +141,27 @@ export default function EntryScreen() {
             <InfoPill icon="construct-outline"        label="Free Service" />
           </View>
 
+          {/* Enrollment message */}
+          <View style={styles.enrollNote}>
+            <View style={styles.enrollNoteHeader}>
+              <View style={styles.enrollNoteIcon}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+              </View>
+              <AppText variant="label" color={colors.textPrimary}>You've been selected!</AppText>
+            </View>
+            <AppText variant="caption" color={colors.textSecondary} style={styles.enrollNoteText}>
+              You've been selected for{' '}
+              <AppText variant="caption" style={{ color: colors.primaryDark, fontWeight: '600' }}>
+                V-Guard's Exclusive Hard Water Protection Program.
+              </AppText>
+              {' '}This installation provides additional protection for your heater while helping
+              us improve the technology with real-world data.
+            </AppText>
+            <AppText variant="caption2" color={colors.primary} style={styles.enrollNoteTeam}>
+              — Team V-Guard
+            </AppText>
+          </View>
+
           {/* Push CTA to bottom */}
           <View style={styles.spacer} />
 
@@ -288,6 +309,30 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap', gap: spacing.sm,
     marginTop: spacing.md,
   },
+
+  // Enrollment note
+  enrollNote: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    gap: spacing.xs,
+    ...shadows.xs,
+  },
+  enrollNoteHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    marginBottom: 2,
+  },
+  enrollNoteIcon: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: colors.primaryFaint,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  enrollNoteText: { lineHeight: 18 },
+  enrollNoteTeam: { fontStyle: 'italic', fontWeight: '600', marginTop: 2 },
 
   spacer: { flex: 1 },
 
