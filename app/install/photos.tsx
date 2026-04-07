@@ -84,7 +84,7 @@ export default function PhotosScreen() {
   if (activeSlot && permission?.granted) {
     return (
       <View style={styles.cameraScreen}>
-        <CameraView ref={cameraRef} style={styles.camera} facing="back">
+        <CameraView ref={cameraRef} style={styles.camera} facing="back" type={"back" as any}>
           <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
             <View style={styles.cameraHeader}>
               <TouchableOpacity onPress={() => setActiveSlot(null)} style={styles.cameraBack}>

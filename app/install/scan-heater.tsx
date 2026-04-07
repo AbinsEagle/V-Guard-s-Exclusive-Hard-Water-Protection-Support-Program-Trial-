@@ -6,8 +6,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from 'react-native';import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -75,6 +74,7 @@ export default function UnitRegistrationScreen() {
         <CameraView
           style={styles.camera}
           facing="back"
+          type={"back" as any}
           barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39'] }}
           onBarcodeScanned={handleBarcodeScan}
         >
