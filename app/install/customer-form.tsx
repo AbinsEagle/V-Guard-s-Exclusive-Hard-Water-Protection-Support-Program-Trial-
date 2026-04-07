@@ -342,7 +342,7 @@ export default function CustomerFormScreen() {
                     onChangeText={(t) => { setHeaterCapacity(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, heaterCapacity: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>L</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>L</AppText>
                 </View>
               </Field>
             </View>
@@ -357,7 +357,7 @@ export default function CustomerFormScreen() {
                     onChangeText={(t) => { setHeaterWattage(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, heaterWattage: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>W</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>W</AppText>
                 </View>
               </Field>
             </View>
@@ -420,7 +420,7 @@ export default function CustomerFormScreen() {
                     onChangeText={(t) => { setPeoplePerDay(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, peoplePerDay: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>persons</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>ppl</AppText>
                 </View>
               </Field>
             </View>
@@ -435,7 +435,7 @@ export default function CustomerFormScreen() {
                     onChangeText={(t) => { setBathsPerDay(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, bathsPerDay: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>baths</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>×</AppText>
                 </View>
               </Field>
             </View>
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   chipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
   chipTextSelected: { fontWeight: '600' },
   rowFields: { flexDirection: 'row', gap: spacing.sm },
-  halfField: { flex: 1 },
+  halfField: { flex: 1, minWidth: 0 },
   primaryBtn: {
     flexDirection: 'row', backgroundColor: colors.primary,
     borderRadius: 14, paddingVertical: spacing.md,
