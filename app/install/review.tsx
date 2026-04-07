@@ -14,20 +14,25 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
+import { submitInstallation } from '../../src/services/submission';
 
 const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    // TODO Sprint 2: Replace with real SharePoint submission
-    await new Promise((r) => setTimeout(r, 1800));
-    console.log('Installation data to submit:', JSON.stringify(data, null, 2));
+    setSubmitError('');
+    const result = await submitInstallation(data);
     setSubmitting(false);
-    router.replace('/install/success');
+    if (result.success) {
+      router.replace('/install/success');
+    } else {
+      setSubmitError(result.error ?? 'Submission failed. Please try again.');
+    }
   };
 
   return (
@@ -120,6 +125,15 @@ export default function ReviewScreen() {
           )}
         </TouchableOpacity>
 
+        {submitError ? (
+          <View style={styles.errorBanner}>
+            <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
+            <AppText variant="caption" color={colors.error} style={{ flex: 1 }}>
+              {submitError}
+            </AppText>
+          </View>
+        ) : null}
+
         <AppText variant="caption" color={colors.textSecondary} style={styles.disclaimer}>
           By submitting, you confirm that all details are accurate and the anti-scalant unit has been properly installed.
         </AppText>
@@ -190,6 +204,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
   },
   submitBtnDisabled: { opacity: 0.6 },
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs,
+    backgroundColor: colors.errorLight,
+    borderRadius: 10, padding: spacing.sm,
+    borderWidth: 1, borderColor: colors.error,
+  },
   disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
 });
 

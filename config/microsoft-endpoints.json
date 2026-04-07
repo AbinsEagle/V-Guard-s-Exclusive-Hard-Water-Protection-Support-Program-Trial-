@@ -1,0 +1,51 @@
+{
+  "_readme": "V-Guard Hard Water Protection Trial — Microsoft 365 endpoints. Edit this file and commit to update the app. All REPLACE_WITH_* values must be filled before going live.",
+
+  "powerAutomate": {
+    "installationWebhookUrl": "REPLACE_WITH_YOUR_POWER_AUTOMATE_HTTP_TRIGGER_URL",
+    "_hint": "Power Automate → New flow → Instant cloud flow → 'When an HTTP request is received'. Save the flow and paste the generated HTTP POST URL above."
+  },
+
+  "sharePoint": {
+    "siteUrl": "REPLACE_WITH_YOUR_SHAREPOINT_SITE_URL",
+    "_hint_siteUrl": "e.g. https://vguard.sharepoint.com/sites/HardWaterTrial",
+    "photosLibraryName": "TrialPhotos",
+    "_hint_photos": "Photos are saved as:  TrialPhotos/{heaterSerialNumber}_{cartridgeNumber}/front.jpg  |  side.jpg  |  scale.jpg",
+    "excelFileName": "VGuard_Trial_Installations.xlsx",
+    "_hint_excel": "Excel file must exist in the SharePoint site Documents library. Column headers must match the list in EXCEL_COLUMNS below exactly."
+  },
+
+  "EXCEL_COLUMNS": [
+    "submittedAt",
+    "installationDate",
+    "technicianName",
+    "technicianPhone",
+    "heaterSerialNumber",
+    "cartridgeNumber",
+    "waterSampleCollected",
+    "customerWhatsApp",
+    "pincode",
+    "gpsLat",
+    "gpsLng",
+    "gpsAccuracyMeters",
+    "waterSource",
+    "waterHardnessEstimate",
+    "waterQualityFeel",
+    "heaterModel",
+    "heaterCapacity",
+    "heaterWattage",
+    "heaterAgeYears",
+    "hotWaterTemperatureSetting",
+    "peoplePerDay",
+    "bathsPerDay",
+    "heaterUsagePattern",
+    "existingScaleVisualRating",
+    "additionalComments",
+    "photoFolder",
+    "frontPhotoUrl",
+    "sidePhotoUrl",
+    "scalePhotoUrl"
+  ],
+
+  "_photoFolderNote": "Power Automate flow must: (1) create folder {heaterSerialNumber}_{cartridgeNumber} in TrialPhotos library, (2) upload front/side/scale base64 images, (3) write one row in Excel with SharePoint photo URLs in the last 3 columns."
+}
