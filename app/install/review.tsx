@@ -15,7 +15,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
 
-const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
@@ -40,7 +40,7 @@ export default function ReviewScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={6} totalSteps={6} labels={STEP_LABELS} />
+      <StepIndicator currentStep={5} totalSteps={5} labels={STEP_LABELS} />
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
