@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   inputErr: { borderColor: colors.error },
   prefix: { marginRight: spacing.xs },
   prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
-  input: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: spacing.sm },
+  input: { flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm },
   multilineInput: { minHeight: 72, paddingTop: spacing.sm },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
