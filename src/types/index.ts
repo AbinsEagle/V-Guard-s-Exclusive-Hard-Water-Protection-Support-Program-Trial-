@@ -28,6 +28,7 @@ export interface InstallationData {
   waterSampleCollected: boolean;
 
   // Step 3 — Customer details
+  customerName: string;
   customerWhatsApp: string;
   installationDate: string;       // auto-captured ISO string
   gpsLat: string;                 // auto-captured
@@ -67,6 +68,7 @@ export const EMPTY_INSTALLATION: InstallationData = {
   cartridgeNumber: '',
   cartridgeBatchCode: '',
   waterSampleCollected: false,
+  customerName: '',
   customerWhatsApp: '',
   installationDate: '',
   gpsLat: '',

@@ -23,6 +23,7 @@
     "heaterSerialNumber",
     "cartridgeNumber",
     "waterSampleCollected",
+    "customerName",
     "customerWhatsApp",
     "pincode",
     "gpsLat",

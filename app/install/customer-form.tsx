@@ -68,6 +68,7 @@ const SCALE_RATING_OPTIONS: { label: string; value: ScaleRating }[] = [
 ];
 
 interface Errors {
+  customerName: string;
   customerWhatsApp: string;
   pincode: string;
   waterSource: string;
@@ -82,6 +83,7 @@ interface Errors {
 export default function CustomerFormScreen() {
   const { data, update } = useInstallation();
 
+  const [customerName, setCustomerName] = useState(data.customerName);
   const [whatsApp, setWhatsApp] = useState(data.customerWhatsApp);
   const [pincode, setPincode] = useState(data.pincode);
   const [waterSource, setWaterSource] = useState<WaterSource | ''>(data.waterSource);
@@ -101,7 +103,7 @@ export default function CustomerFormScreen() {
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
   const [gpsLabel, setGpsLabel] = useState('');
   const [errors, setErrors] = useState<Errors>({
-    customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
+    customerName: '', customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
     heaterModel: '', heaterCapacity: '', heaterWattage: '',
     peoplePerDay: '', bathsPerDay: '',
   });
@@ -130,10 +132,11 @@ export default function CustomerFormScreen() {
 
   const validate = (): boolean => {
     const e: Errors = {
-      customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
+      customerName: '', customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
       heaterModel: '', heaterCapacity: '', heaterWattage: '',
       peoplePerDay: '', bathsPerDay: '',
     };
+    if (!customerName.trim()) e.customerName = 'Customer name is required';
     if (!whatsApp.trim()) e.customerWhatsApp = 'WhatsApp number is required';
     else if (!/^[6-9]\d{9}$/.test(whatsApp.trim())) e.customerWhatsApp = 'Enter a valid 10-digit number';
     if (!pincode.trim()) e.pincode = 'Pincode is required';
@@ -152,6 +155,7 @@ export default function CustomerFormScreen() {
   const handleContinue = () => {
     if (!validate()) return;
     update({
+      customerName: customerName.trim(),
       customerWhatsApp: whatsApp.trim(),
       pincode: pincode.trim(),
       waterSource: waterSource as WaterSource,
@@ -224,6 +228,19 @@ export default function CustomerFormScreen() {
 
           {/* ── Customer ── */}
           <SectionHeader title="Customer Information" icon="person" />
+
+          <Field label="Customer Name" required error={errors.customerName}>
+            <View style={[styles.inputBox, errors.customerName ? styles.inputErr : null]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Full name of the customer"
+                placeholderTextColor={colors.textHint}
+                value={customerName}
+                onChangeText={(t) => { setCustomerName(t); setErrors((e) => ({ ...e, customerName: '' })); }}
+                autoCapitalize="words"
+              />
+            </View>
+          </Field>
 
           <Field label="WhatsApp Number" required error={errors.customerWhatsApp}>
             <View style={[styles.inputBox, errors.customerWhatsApp ? styles.inputErr : null]}>

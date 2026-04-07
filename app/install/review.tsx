@@ -65,6 +65,7 @@ export default function ReviewScreen() {
 
         {/* Customer */}
         <Section title="Customer Details" icon="home">
+          <Row label="Name" value={data.customerName} />
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
           <Row label="Water Source" value={data.waterSource} />
