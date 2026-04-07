@@ -214,9 +214,10 @@ const errStyles = StyleSheet.create({
 
 const pillStyles = StyleSheet.create({
   pill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flex: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
     backgroundColor: 'rgba(196,122,0,0.12)',
-    paddingHorizontal: spacing.sm, paddingVertical: 4,
+    paddingHorizontal: spacing.sm, paddingVertical: spacing.sm - 2,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: 'rgba(196,122,0,0.20)',
@@ -266,6 +267,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     marginTop: -spacing.xl,
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.lg,
   },
 
@@ -305,9 +307,10 @@ const styles = StyleSheet.create({
 
   // ── Info pills ──
   infoRow: {
-    flexDirection: 'row', justifyContent: 'center',
-    flexWrap: 'wrap', gap: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: spacing.md,
+    gap: spacing.sm,
   },
 
   // Enrollment note
@@ -315,6 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
+    marginTop: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 3,
