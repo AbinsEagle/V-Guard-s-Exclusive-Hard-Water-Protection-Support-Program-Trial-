@@ -150,18 +150,18 @@ export default function EntryScreen() {
               <View style={styles.enrollNoteIcon}>
                 <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
               </View>
-              <AppText variant="label" color={colors.textPrimary}>You've been selected!</AppText>
+              <AppText variant="label" color={colors.textPrimary}>Customer Selected for Trial</AppText>
             </View>
             <AppText variant="caption" color={colors.textSecondary} style={styles.enrollNoteText}>
-              You've been selected for{' '}
+              This customer has been selected for{' '}
               <AppText variant="caption" style={{ color: colors.primaryDark, fontWeight: '600' }}>
-                V-Guard's Exclusive Hard Water Protection Program.
+                V-Guard's Exclusive Hard Water Protection Support Program (trial run).
               </AppText>
-              {' '}This installation provides additional protection for your heater while helping
-              us improve the technology with real-world data.
+              {' '}Register the installation below. The data collected will help us understand
+              real-world performance and fine-tune the technology for hard-water users.
             </AppText>
             <AppText variant="caption2" color={colors.primary} style={styles.enrollNoteTeam}>
-              — Team V-Guard
+              — V-Guard MED Research Division, Kochi
             </AppText>
           </View>
 
