@@ -69,13 +69,16 @@ export default function EntryScreen() {
           <AppText variant="h2" color={colors.headerBg} style={styles.heroTitle}>
             Hard Water{'\n'}Protection Program
           </AppText>
-          <AppText variant="subhead" color={colors.primaryDark}>
+          <AppText variant="subhead" color={colors.primaryDark} style={styles.heroSub}>
             Exclusive Program · 10-Month Trial
           </AppText>
         </View>
 
         {/* ── Content area — flex, no scroll ── */}
         <View style={styles.content}>
+
+          {/* Top block — form card + pills + note, uniform gap between each */}
+          <View style={styles.topBlock}>
 
           {/* Form card floats over amber */}
           <View style={styles.formCard}>
@@ -162,10 +165,10 @@ export default function EntryScreen() {
             </AppText>
           </View>
 
-          {/* Push CTA to bottom */}
-          <View style={styles.spacer} />
+          </View>{/* end topBlock */}
 
-          {/* CTA */}
+          {/* Bottom block — CTA + footer, fixed at bottom */}
+          <View style={styles.bottomBlock}>
           <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.75}>
             <AppText variant="label" color={colors.headerBg}>Start Installation</AppText>
             <View style={styles.startBtnArrow}>
@@ -176,6 +179,7 @@ export default function EntryScreen() {
           <AppText variant="caption2" color={colors.textTertiary} style={styles.footer}>
             For internal use only · V-Guard R&D
           </AppText>
+          </View>{/* end bottomBlock */}
 
         </View>
       </KeyboardAvoidingView>
@@ -257,8 +261,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
     gap: spacing.xs,
+    alignItems: 'center',
   },
-  heroTitle: { lineHeight: 32 },
+  heroTitle: { lineHeight: 36, textAlign: 'center' },
+  heroSub:   { textAlign: 'center' },
 
   // ── Content ──
   content: {
@@ -269,13 +275,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xs,
     paddingBottom: spacing.lg,
+    justifyContent: 'space-between',
   },
+  topBlock: { gap: spacing.md },
+  bottomBlock: { gap: spacing.sm },
 
   // ── Form card ──
   formCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    marginTop: spacing.md,
     overflow: 'hidden',
     ...shadows.md,
     borderTopWidth: 3, borderTopColor: colors.primary,
@@ -309,7 +317,6 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: spacing.md,
     gap: spacing.sm,
   },
 
@@ -318,7 +325,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
-    marginTop: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
     borderLeftWidth: 3,
@@ -338,8 +344,6 @@ const styles = StyleSheet.create({
   enrollNoteText: { lineHeight: 18 },
   enrollNoteTeam: { fontStyle: 'italic', fontWeight: '600', marginTop: 2 },
 
-  spacer: { flex: 1 },
-
   // ── CTA ──
   startBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -354,5 +358,5 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  footer: { textAlign: 'center', marginTop: spacing.sm },
+  footer: { textAlign: 'center' },
 });
