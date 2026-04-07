@@ -239,7 +239,18 @@ export default function UnitRegistrationScreen() {
             }
           </View>
 
-          {/* ── Water sample checkbox ── */}
+          {/* ── Link preview card ── */}
+          <View style={styles.linkCard}>
+            <LinkItem icon="flame-outline" label="Water Heater" value={heaterSerial || '—'} filled={!!heaterSerial} />
+            <View style={styles.linkConnector}>
+              <View style={styles.linkDot} />
+              <Ionicons name="link" size={16} color={colors.primary} />
+              <View style={styles.linkDot} />
+            </View>
+            <LinkItem icon="cube-outline" label="Cartridge" value={cartridgeNum || '—'} filled={!!cartridgeNum} />
+          </View>
+
+          {/* ── Water sample checkbox — just above CTA, last thing before continuing ── */}
           <TouchableOpacity
             style={[styles.checkRow, sampleCollected && styles.checkRowChecked]}
             onPress={() => setSampleCollected((v) => !v)}
@@ -257,17 +268,6 @@ export default function UnitRegistrationScreen() {
               </AppText>
             </View>
           </TouchableOpacity>
-
-          {/* ── Link preview card ── */}
-          <View style={styles.linkCard}>
-            <LinkItem icon="flame-outline" label="Water Heater" value={heaterSerial || '—'} filled={!!heaterSerial} />
-            <View style={styles.linkConnector}>
-              <View style={styles.linkDot} />
-              <Ionicons name="link" size={16} color={colors.primary} />
-              <View style={styles.linkDot} />
-            </View>
-            <LinkItem icon="cube-outline" label="Cartridge" value={cartridgeNum || '—'} filled={!!cartridgeNum} />
-          </View>
 
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
