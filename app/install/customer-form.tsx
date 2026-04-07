@@ -16,21 +16,62 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius } from '../../src/theme';
-import { WaterSource } from '../../src/types';
+import {
+  WaterSource, WaterHardness, HeaterAge, TempSetting, UsagePattern, ScaleRating,
+} from '../../src/types';
 
 const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
 
 const WATER_SOURCES: { label: string; value: WaterSource }[] = [
-  { label: 'Borewell', value: 'Borewell' },
-  { label: 'Municipal', value: 'Municipal' },
-  { label: 'Tank', value: 'Tank' },
-  { label: 'Other', value: 'Other' },
+  { label: 'Borewell',              value: 'Borewell' },
+  { label: 'Municipal / BWSSB',     value: 'Municipal / BWSSB' },
+  { label: 'Open Well',             value: 'Open Well' },
+  { label: 'River / Canal',         value: 'River / Canal' },
+  { label: 'Rainwater Harvesting',  value: 'Rainwater Harvesting' },
+  { label: 'Water Tanker',          value: 'Water Tanker' },
+  { label: 'Mixed / Not Sure',      value: 'Mixed / Not Sure' },
+  { label: 'Other',                 value: 'Other' },
+];
+
+const HARDNESS_OPTIONS: { label: string; value: WaterHardness }[] = [
+  { label: '<150 ppm (Soft)',       value: '<150' },
+  { label: '150–300 ppm',           value: '150-300' },
+  { label: '300–500 ppm',           value: '300-500' },
+  { label: '>500 ppm (Very Hard)',  value: '>500' },
+];
+
+const HEATER_AGE_OPTIONS: { label: string; value: HeaterAge }[] = [
+  { label: '< 1 year',   value: '<1 year' },
+  { label: '1–3 years',  value: '1-3 years' },
+  { label: '3–5 years',  value: '3-5 years' },
+  { label: '> 5 years',  value: '>5 years' },
+];
+
+const TEMP_OPTIONS: { label: string; value: TempSetting }[] = [
+  { label: 'Low (<55°C)',       value: 'Low (<55°C)' },
+  { label: 'Medium (55–65°C)', value: 'Medium (55-65°C)' },
+  { label: 'High (>65°C)',     value: 'High (>65°C)' },
+];
+
+const USAGE_OPTIONS: { label: string; value: UsagePattern }[] = [
+  { label: 'Morning only',        value: 'Morning only' },
+  { label: 'Evening only',        value: 'Evening only' },
+  { label: 'Morning + Evening',   value: 'Morning + Evening' },
+  { label: 'All day',             value: 'All day' },
+];
+
+const SCALE_RATING_OPTIONS: { label: string; value: ScaleRating }[] = [
+  { label: 'None',      value: 'None' },
+  { label: 'Mild',      value: 'Mild' },
+  { label: 'Moderate',  value: 'Moderate' },
+  { label: 'Severe',    value: 'Severe' },
 ];
 
 interface Errors {
   customerWhatsApp: string;
   pincode: string;
   waterSource: string;
+  waterHardnessEstimate: string;
   heaterModel: string;
   heaterCapacity: string;
   heaterWattage: string;
@@ -44,18 +85,23 @@ export default function CustomerFormScreen() {
   const [whatsApp, setWhatsApp] = useState(data.customerWhatsApp);
   const [pincode, setPincode] = useState(data.pincode);
   const [waterSource, setWaterSource] = useState<WaterSource | ''>(data.waterSource);
+  const [waterHardness, setWaterHardness] = useState<WaterHardness | ''>(data.waterHardnessEstimate);
   const [waterFeel, setWaterFeel] = useState(data.waterQualityFeel);
   const [heaterModel, setHeaterModel] = useState(data.heaterModel);
   const [heaterCapacity, setHeaterCapacity] = useState(data.heaterCapacity);
   const [heaterWattage, setHeaterWattage] = useState(data.heaterWattage);
+  const [heaterAge, setHeaterAge] = useState<HeaterAge | ''>(data.heaterAgeYears);
+  const [tempSetting, setTempSetting] = useState<TempSetting | ''>(data.hotWaterTemperatureSetting);
   const [peoplePerDay, setPeoplePerDay] = useState(data.peoplePerDay);
   const [bathsPerDay, setBathsPerDay] = useState(data.bathsPerDay);
+  const [usagePattern, setUsagePattern] = useState<UsagePattern | ''>(data.heaterUsagePattern);
+  const [scaleRating, setScaleRating] = useState<ScaleRating | ''>(data.existingScaleVisualRating);
   const [comments, setComments] = useState(data.additionalComments);
 
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
   const [gpsLabel, setGpsLabel] = useState('');
   const [errors, setErrors] = useState<Errors>({
-    customerWhatsApp: '', pincode: '', waterSource: '',
+    customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
     heaterModel: '', heaterCapacity: '', heaterWattage: '',
     peoplePerDay: '', bathsPerDay: '',
   });
@@ -72,9 +118,8 @@ export default function CustomerFormScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') { setGpsStatus('error'); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const { latitude, longitude } = loc.coords;
-      update({ gpsLat: String(latitude), gpsLng: String(longitude) });
-      // Reverse geocode for display
+      const { latitude, longitude, accuracy } = loc.coords;
+      update({ gpsLat: String(latitude), gpsLng: String(longitude), gpsAccuracyMeters: accuracy });
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       setGpsLabel(`${place?.district || place?.city || ''}, ${place?.region || ''}`);
       setGpsStatus('done');
@@ -85,7 +130,7 @@ export default function CustomerFormScreen() {
 
   const validate = (): boolean => {
     const e: Errors = {
-      customerWhatsApp: '', pincode: '', waterSource: '',
+      customerWhatsApp: '', pincode: '', waterSource: '', waterHardnessEstimate: '',
       heaterModel: '', heaterCapacity: '', heaterWattage: '',
       peoplePerDay: '', bathsPerDay: '',
     };
@@ -94,6 +139,7 @@ export default function CustomerFormScreen() {
     if (!pincode.trim()) e.pincode = 'Pincode is required';
     else if (!/^\d{6}$/.test(pincode.trim())) e.pincode = 'Enter a valid 6-digit pincode';
     if (!waterSource) e.waterSource = 'Please select water source';
+    if (!waterHardness) e.waterHardnessEstimate = 'Please select hardness estimate';
     if (!heaterModel.trim()) e.heaterModel = 'Heater model is required';
     if (!heaterCapacity.trim()) e.heaterCapacity = 'Capacity is required';
     if (!heaterWattage.trim()) e.heaterWattage = 'Wattage is required';
@@ -109,12 +155,17 @@ export default function CustomerFormScreen() {
       customerWhatsApp: whatsApp.trim(),
       pincode: pincode.trim(),
       waterSource: waterSource as WaterSource,
+      waterHardnessEstimate: waterHardness as WaterHardness,
       waterQualityFeel: waterFeel.trim(),
       heaterModel: heaterModel.trim(),
       heaterCapacity: heaterCapacity.trim(),
       heaterWattage: heaterWattage.trim(),
+      heaterAgeYears: heaterAge as HeaterAge,
+      hotWaterTemperatureSetting: tempSetting as TempSetting,
       peoplePerDay: peoplePerDay.trim(),
       bathsPerDay: bathsPerDay.trim(),
+      heaterUsagePattern: usagePattern as UsagePattern,
+      existingScaleVisualRating: scaleRating as ScaleRating,
       additionalComments: comments.trim(),
     });
     router.push('/install/photos');
@@ -204,6 +255,9 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
+          {/* ── Water Quality ── */}
+          <SectionHeader title="Water Quality" icon="water" />
+
           <Field label="Water Source" required error={errors.waterSource}>
             <View style={styles.chipRow}>
               {WATER_SOURCES.map((s) => (
@@ -219,6 +273,27 @@ export default function CustomerFormScreen() {
                     style={waterSource === s.value ? styles.chipTextSelected : undefined}
                   >
                     {s.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Water Hardness (TDS estimate)" required error={errors.waterHardnessEstimate}>
+            <View style={styles.chipRow}>
+              {HARDNESS_OPTIONS.map((o) => (
+                <TouchableOpacity
+                  key={o.value}
+                  style={[styles.chip, waterHardness === o.value && styles.chipSelected]}
+                  onPress={() => { setWaterHardness(o.value); setErrors((e) => ({ ...e, waterHardnessEstimate: '' })); }}
+                  activeOpacity={0.75}
+                >
+                  <AppText
+                    variant="caption"
+                    color={waterHardness === o.value ? colors.headerBg : colors.textSecondary}
+                    style={waterHardness === o.value ? styles.chipTextSelected : undefined}
+                  >
+                    {o.label}
                   </AppText>
                 </TouchableOpacity>
               ))}
@@ -288,6 +363,48 @@ export default function CustomerFormScreen() {
             </View>
           </View>
 
+          <Field label="Heater Age">
+            <View style={styles.chipRow}>
+              {HEATER_AGE_OPTIONS.map((o) => (
+                <TouchableOpacity
+                  key={o.value}
+                  style={[styles.chip, heaterAge === o.value && styles.chipSelected]}
+                  onPress={() => setHeaterAge(o.value)}
+                  activeOpacity={0.75}
+                >
+                  <AppText
+                    variant="caption"
+                    color={heaterAge === o.value ? colors.headerBg : colors.textSecondary}
+                    style={heaterAge === o.value ? styles.chipTextSelected : undefined}
+                  >
+                    {o.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Thermostat Setting">
+            <View style={styles.chipRow}>
+              {TEMP_OPTIONS.map((o) => (
+                <TouchableOpacity
+                  key={o.value}
+                  style={[styles.chip, tempSetting === o.value && styles.chipSelected]}
+                  onPress={() => setTempSetting(o.value)}
+                  activeOpacity={0.75}
+                >
+                  <AppText
+                    variant="caption"
+                    color={tempSetting === o.value ? colors.headerBg : colors.textSecondary}
+                    style={tempSetting === o.value ? styles.chipTextSelected : undefined}
+                  >
+                    {o.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Field>
+
           {/* ── Usage ── */}
           <SectionHeader title="Daily Usage" icon="time" />
 
@@ -323,6 +440,51 @@ export default function CustomerFormScreen() {
               </Field>
             </View>
           </View>
+
+          <Field label="Usage Pattern">
+            <View style={styles.chipRow}>
+              {USAGE_OPTIONS.map((o) => (
+                <TouchableOpacity
+                  key={o.value}
+                  style={[styles.chip, usagePattern === o.value && styles.chipSelected]}
+                  onPress={() => setUsagePattern(o.value)}
+                  activeOpacity={0.75}
+                >
+                  <AppText
+                    variant="caption"
+                    color={usagePattern === o.value ? colors.headerBg : colors.textSecondary}
+                    style={usagePattern === o.value ? styles.chipTextSelected : undefined}
+                  >
+                    {o.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Field>
+
+          {/* ── Installation Baseline ── */}
+          <SectionHeader title="Installation Baseline" icon="layers-outline" />
+
+          <Field label="Existing Scale Condition">
+            <View style={styles.chipRow}>
+              {SCALE_RATING_OPTIONS.map((o) => (
+                <TouchableOpacity
+                  key={o.value}
+                  style={[styles.chip, scaleRating === o.value && styles.chipSelected]}
+                  onPress={() => setScaleRating(o.value)}
+                  activeOpacity={0.75}
+                >
+                  <AppText
+                    variant="caption"
+                    color={scaleRating === o.value ? colors.headerBg : colors.textSecondary}
+                    style={scaleRating === o.value ? styles.chipTextSelected : undefined}
+                  >
+                    {o.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Field>
 
           {/* ── Comments ── */}
           <SectionHeader title="Additional Comments" icon="chatbubble-ellipses" />
@@ -379,8 +541,6 @@ function Field({ label, required, error, children }: {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
@@ -461,4 +621,3 @@ const fieldStyles = StyleSheet.create({
   label: { marginBottom: spacing.xs },
   error: { marginTop: 4 },
 });
-

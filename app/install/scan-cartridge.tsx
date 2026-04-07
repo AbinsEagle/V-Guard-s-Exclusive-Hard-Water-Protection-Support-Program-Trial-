@@ -3,6 +3,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,13 +20,19 @@ const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 
 
 export default function ScanCartridgeScreen() {
   const { data, update } = useInstallation();
-  const [cartridgeNumber, setCartridgeNumber] = useState('');
+  const [cartridgeNumber, setCartridgeNumber] = useState(data.cartridgeNumber || '');
+  const [batchCode, setBatchCode] = useState(data.cartridgeBatchCode || '');
+  const [sampleCollected, setSampleCollected] = useState(data.waterSampleCollected || false);
   const [error, setError] = useState('');
 
   const handleContinue = () => {
     const code = cartridgeNumber.trim();
     if (!code) { setError('Please enter the cartridge number'); return; }
-    update({ cartridgeNumber: code });
+    update({
+      cartridgeNumber: code,
+      cartridgeBatchCode: batchCode.trim(),
+      waterSampleCollected: sampleCollected,
+    });
     router.push('/install/customer-form');
   };
 
@@ -40,10 +49,15 @@ export default function ScanCartridgeScreen() {
 
       <StepIndicator currentStep={3} totalSteps={6} labels={STEP_LABELS} />
 
-      {/* Body — no scroll, space-between layout */}
-      <View style={styles.body}>
-        <View style={styles.bodyContent}>
-
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Heater confirmed badge */}
           <View style={styles.confirmedBadge}>
             <Ionicons name="checkmark-circle" size={16} color={colors.success} />
@@ -54,13 +68,13 @@ export default function ScanCartridgeScreen() {
 
           {/* Heading */}
           <View style={styles.headingBlock}>
-            <AppText variant="h3">Enter Cartridge Number</AppText>
+            <AppText variant="h3">Enter Cartridge Details</AppText>
             <AppText variant="caption" color={colors.textSecondary}>
               Find the number printed on the anti-scalant cartridge label.
             </AppText>
           </View>
 
-          {/* Input */}
+          {/* Cartridge Number */}
           <View>
             <AppText variant="label" style={styles.fieldLabel}>
               Cartridge Number <AppText variant="label" color={colors.error}>*</AppText>
@@ -75,14 +89,55 @@ export default function ScanCartridgeScreen() {
                 onChangeText={(t) => { setCartridgeNumber(t.toUpperCase()); setError(''); }}
                 autoCapitalize="characters"
                 autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleContinue}
+                returnKeyType="next"
               />
             </View>
             {error ? (
               <AppText variant="caption" color={colors.error} style={styles.errorText}>{error}</AppText>
             ) : null}
           </View>
+
+          {/* Batch Code */}
+          <View>
+            <AppText variant="label" style={styles.fieldLabel}>
+              Batch Code{' '}
+              <AppText variant="caption" color={colors.textSecondary}>(optional)</AppText>
+            </AppText>
+            <View style={styles.inputBox}>
+              <Ionicons name="barcode-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. B2024-07"
+                placeholderTextColor={colors.textHint}
+                value={batchCode}
+                onChangeText={(t) => setBatchCode(t.toUpperCase())}
+                autoCapitalize="characters"
+                returnKeyType="done"
+                onSubmitEditing={handleContinue}
+              />
+            </View>
+          </View>
+
+          {/* Water Sample Checkbox */}
+          <TouchableOpacity
+            style={styles.checkRow}
+            onPress={() => setSampleCollected((v) => !v)}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.checkbox, sampleCollected && styles.checkboxChecked]}>
+              {sampleCollected && (
+                <Ionicons name="checkmark" size={14} color={colors.headerBg} />
+              )}
+            </View>
+            <View style={styles.checkLabelBlock}>
+              <AppText variant="label" color={colors.textPrimary}>
+                Water sample bottle collected
+              </AppText>
+              <AppText variant="caption" color={colors.textSecondary}>
+                500ml bottle sealed and placed in the kit
+              </AppText>
+            </View>
+          </TouchableOpacity>
 
           {/* Link preview card */}
           <View style={styles.linkCard}>
@@ -121,22 +176,23 @@ export default function ScanCartridgeScreen() {
             </View>
           </View>
 
-        </View>
+          {/* CTA */}
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
+            <AppText variant="label" color={colors.headerBg}>Continue to Customer Details</AppText>
+            <View style={styles.btnArrow}>
+              <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            </View>
+          </TouchableOpacity>
 
-        {/* CTA anchored at bottom */}
-        <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-          <AppText variant="label" color={colors.headerBg}>Continue to Customer Details</AppText>
-          <View style={styles.btnArrow}>
-            <Ionicons name="arrow-forward" size={16} color={colors.white} />
-          </View>
-        </TouchableOpacity>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
@@ -145,15 +201,13 @@ const styles = StyleSheet.create({
   backBtn: { padding: spacing.xs },
 
   body: {
-    flex: 1,
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-    justifyContent: 'space-between',
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
   },
-  bodyContent: { gap: spacing.md },
 
   confirmedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
@@ -180,6 +234,26 @@ const styles = StyleSheet.create({
   },
   errorText: { marginTop: 4 },
 
+  // Water sample checkbox row
+  checkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: colors.border,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
+  },
+  checkbox: {
+    width: 24, height: 24, borderRadius: 6,
+    borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryFaint,
+  },
+  checkLabelBlock: { flex: 1, gap: 2 },
+
   // Link preview
   linkCard: {
     flexDirection: 'row', alignItems: 'center',
@@ -203,6 +277,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.primary,
     borderRadius: radius.lg, paddingVertical: spacing.md,
+    marginTop: spacing.xs,
     ...shadows.sm,
   },
   btnArrow: {

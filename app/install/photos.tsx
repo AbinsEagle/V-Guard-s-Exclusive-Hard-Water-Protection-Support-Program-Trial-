@@ -3,6 +3,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,12 +17,25 @@ import { colors, spacing, radius, shadows } from '../../src/theme';
 
 const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
 
-type PhotoSlot = 'front' | 'side';
+type PhotoSlot = 'front' | 'side' | 'scale';
 
 interface PhotoState {
   front: string | null;
   side: string | null;
+  scale: string | null;
 }
+
+const CAMERA_LABELS: Record<PhotoSlot, string> = {
+  front: 'Front View',
+  side:  'Side View',
+  scale: 'Existing Scale',
+};
+
+const CAMERA_GUIDES: Record<PhotoSlot, string> = {
+  front: 'Capture anti-scalant unit — front face',
+  side:  'Capture anti-scalant unit — side profile',
+  scale: 'Capture scale buildup on tap / showerhead',
+};
 
 export default function PhotosScreen() {
   const { data, update } = useInstallation();
@@ -29,6 +43,7 @@ export default function PhotosScreen() {
   const [photos, setPhotos] = useState<PhotoState>({
     front: data.frontPhotoUri,
     side:  data.sidePhotoUri,
+    scale: data.scalePhotoUri,
   });
   const [activeSlot, setActiveSlot] = useState<PhotoSlot | null>(null);
   const cameraRef = useRef<CameraView>(null);
@@ -55,11 +70,15 @@ export default function PhotosScreen() {
   };
 
   const handleContinue = () => {
-    update({ frontPhotoUri: photos.front, sidePhotoUri: photos.side });
+    update({
+      frontPhotoUri: photos.front,
+      sidePhotoUri:  photos.side,
+      scalePhotoUri: photos.scale,
+    });
     router.push('/install/review');
   };
 
-  const bothCaptured = !!(photos.front && photos.side);
+  const requiredCaptured = !!(photos.front && photos.side);
 
   // ── Full-screen camera ──
   if (activeSlot && permission?.granted) {
@@ -74,16 +93,14 @@ export default function PhotosScreen() {
               <View style={styles.cameraBadge}>
                 <Ionicons name="camera" size={13} color={colors.white} />
                 <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-                  {activeSlot === 'front' ? 'Front View' : 'Side View'}
+                  {CAMERA_LABELS[activeSlot]}
                 </AppText>
               </View>
               <View style={{ width: 40 }} />
             </View>
             <View style={styles.cameraGuide}>
               <AppText variant="caption" color={colors.white} style={styles.cameraGuideText}>
-                {activeSlot === 'front'
-                  ? 'Capture anti-scalant unit — front face'
-                  : 'Capture anti-scalant unit — side profile'}
+                {CAMERA_GUIDES[activeSlot]}
               </AppText>
             </View>
             <View style={styles.cameraControls}>
@@ -109,14 +126,16 @@ export default function PhotosScreen() {
 
       <StepIndicator currentStep={5} totalSteps={6} labels={STEP_LABELS} />
 
-      {/* Body — no scroll */}
-      <View style={styles.body}>
-
+      <ScrollView
+        style={styles.scrollArea}
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
         <AppText variant="caption" color={colors.textSecondary} style={styles.instruction}>
-          Two photos required — front and side view of the fitted anti-scalant unit.
+          Front and side photos are required. Scale baseline photo is optional but recommended.
         </AppText>
 
-        {/* Side-by-side photo cards — key no-scroll layout */}
+        {/* Row 1: front + side */}
         <View style={styles.photoRow}>
           <PhotoCard
             slot="front"
@@ -136,22 +155,43 @@ export default function PhotosScreen() {
           />
         </View>
 
+        {/* Row 2: scale baseline (optional, half-width) */}
+        <View style={styles.scaleRow}>
+          <View style={styles.scaleCardWrapper}>
+            <PhotoCard
+              slot="scale"
+              label="Existing Scale"
+              hint="Tap / showerhead scale"
+              photoUri={photos.scale}
+              onCapture={() => openCamera('scale')}
+              onRetake={() => openCamera('scale')}
+            />
+          </View>
+          <View style={styles.scaleHint}>
+            <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
+            <AppText variant="caption" color={colors.textSecondary}>
+              Photo of existing scale buildup on tap aerator or showerhead. Used as installation baseline.
+            </AppText>
+          </View>
+        </View>
+
         {/* Status indicators */}
         <View style={styles.statusRow}>
           <StatusDot captured={!!photos.front} label="Front" />
           <StatusDot captured={!!photos.side}  label="Side" />
-          {!bothCaptured && (
+          <StatusDot captured={!!photos.scale} label="Scale" optional />
+          {!requiredCaptured && (
             <AppText variant="caption2" color={colors.textTertiary} style={styles.statusHint}>
-              Both required to proceed
+              Front + Side required
             </AppText>
           )}
         </View>
 
         {/* CTA */}
         <TouchableOpacity
-          style={[styles.primaryBtn, !bothCaptured && styles.primaryBtnDisabled]}
+          style={[styles.primaryBtn, !requiredCaptured && styles.primaryBtnDisabled]}
           onPress={handleContinue}
-          disabled={!bothCaptured}
+          disabled={!requiredCaptured}
           activeOpacity={0.8}
         >
           <AppText variant="label" color={colors.headerBg}>Review & Submit</AppText>
@@ -160,7 +200,7 @@ export default function PhotosScreen() {
           </View>
         </TouchableOpacity>
 
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -168,7 +208,7 @@ export default function PhotosScreen() {
 // ─── Photo Card ───────────────────────────────────────────────────────────────
 
 function PhotoCard({
-  slot, label, hint, photoUri, onCapture, onRetake,
+  label, hint, photoUri, onCapture, onRetake,
 }: {
   slot: PhotoSlot;
   label: string;
@@ -179,7 +219,6 @@ function PhotoCard({
 }) {
   return (
     <View style={cardStyles.card}>
-      {/* Card header */}
       <View style={cardStyles.header}>
         <View style={cardStyles.labelBadge}>
           <AppText variant="caption2" color={colors.headerBg} style={cardStyles.labelText}>
@@ -192,7 +231,6 @@ function PhotoCard({
         }
       </View>
 
-      {/* Photo or capture zone */}
       {photoUri ? (
         <View style={cardStyles.previewWrapper}>
           <Image source={{ uri: photoUri }} style={cardStyles.preview} resizeMode="cover" />
@@ -216,15 +254,17 @@ function PhotoCard({
   );
 }
 
-function StatusDot({ captured, label }: { captured: boolean; label: string }) {
+function StatusDot({ captured, label, optional }: { captured: boolean; label: string; optional?: boolean }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
       <View style={{
         width: 8, height: 8, borderRadius: 4,
-        backgroundColor: captured ? colors.success : colors.borderOpaque,
+        backgroundColor: captured
+          ? colors.success
+          : optional ? 'rgba(196,122,0,0.35)' : colors.borderOpaque,
       }} />
       <AppText variant="caption2" color={captured ? colors.success : colors.textTertiary}>
-        {label}
+        {label}{optional ? ' (opt)' : ''}
       </AppText>
     </View>
   );
@@ -241,20 +281,22 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: spacing.xs },
 
+  scrollArea: { flex: 1, backgroundColor: colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
   body: {
-    flex: 1,
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xxl,
     gap: spacing.md,
   },
   instruction: { lineHeight: 18 },
 
-  // Side-by-side photo cards
-  photoRow:   { flex: 1, flexDirection: 'row', gap: spacing.md },
-  statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  photoRow:  { flexDirection: 'row', gap: spacing.md, height: 220 },
+
+  scaleRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
+  scaleCardWrapper: { width: '45%', height: 160 },
+  scaleHint: { flex: 1, flexDirection: 'row', gap: spacing.xs, paddingTop: spacing.xs },
+
+  statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
   statusHint: { marginLeft: 'auto' },
 
   primaryBtn: {
@@ -331,12 +373,12 @@ const cardStyles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: colors.background,
     alignItems: 'center', justifyContent: 'center',
-    minHeight: 100,
+    minHeight: 80,
     gap: 2,
   },
   tapLabel: { fontWeight: '600', marginTop: 2 },
 
-  previewWrapper: { flex: 1, position: 'relative', minHeight: 100 },
+  previewWrapper: { flex: 1, position: 'relative', minHeight: 80 },
   preview: { flex: 1, borderRadius: radius.md },
   retakeBtn: {
     position: 'absolute', bottom: spacing.xs, right: spacing.xs,

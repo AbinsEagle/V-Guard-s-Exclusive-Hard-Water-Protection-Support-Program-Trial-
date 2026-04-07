@@ -48,6 +48,8 @@ export default function ReviewScreen() {
         <Section title="Linked Units" icon="link">
           <Row label="Heater Serial No." value={data.heaterSerialNumber} />
           <Row label="Cartridge No." value={data.cartridgeNumber} />
+          {data.cartridgeBatchCode ? <Row label="Batch Code" value={data.cartridgeBatchCode} /> : null}
+          <Row label="Sample Collected" value={data.waterSampleCollected ? 'Yes' : 'No'} />
         </Section>
 
         {/* Technician */}
@@ -61,6 +63,7 @@ export default function ReviewScreen() {
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
           <Row label="Water Source" value={data.waterSource} />
+          {data.waterHardnessEstimate ? <Row label="Hardness Estimate" value={`${data.waterHardnessEstimate} ppm`} /> : null}
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
@@ -71,12 +74,16 @@ export default function ReviewScreen() {
           <Row label="Model" value={data.heaterModel} />
           <Row label="Capacity" value={`${data.heaterCapacity} L`} />
           <Row label="Wattage" value={`${data.heaterWattage} W`} />
+          {data.heaterAgeYears ? <Row label="Age" value={data.heaterAgeYears} /> : null}
+          {data.hotWaterTemperatureSetting ? <Row label="Thermostat" value={data.hotWaterTemperatureSetting} /> : null}
         </Section>
 
         {/* Usage */}
         <Section title="Daily Usage" icon="time">
           <Row label="People/day" value={data.peoplePerDay} />
           <Row label="Baths/day" value={data.bathsPerDay} />
+          {data.heaterUsagePattern ? <Row label="Usage Pattern" value={data.heaterUsagePattern} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Existing Scale" value={data.existingScaleVisualRating} /> : null}
           {data.additionalComments ? <Row label="Comments" value={data.additionalComments} /> : null}
         </Section>
 
@@ -85,6 +92,7 @@ export default function ReviewScreen() {
           <View style={styles.photosRow}>
             <PhotoThumb label="Front View" uri={data.frontPhotoUri} />
             <PhotoThumb label="Side View" uri={data.sidePhotoUri} />
+            <PhotoThumb label="Scale" uri={data.scalePhotoUri} />
           </View>
         </Section>
 
