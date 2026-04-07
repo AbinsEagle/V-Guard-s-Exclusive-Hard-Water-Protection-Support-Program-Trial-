@@ -131,10 +131,6 @@ export default function PhotosScreen() {
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        <AppText variant="caption" color={colors.textSecondary} style={styles.instruction}>
-          Front and side photos are required. Scale baseline photo is optional but recommended.
-        </AppText>
-
         {/* Row 1: front + side */}
         <View style={styles.photoRow}>
           <PhotoCard
@@ -155,23 +151,17 @@ export default function PhotosScreen() {
           />
         </View>
 
-        {/* Row 2: scale baseline (optional, half-width) */}
+        {/* Row 2: scale baseline (optional) */}
         <View style={styles.scaleRow}>
           <View style={styles.scaleCardWrapper}>
             <PhotoCard
               slot="scale"
               label="Existing Scale"
-              hint="Tap / showerhead scale"
+              hint="Tap / showerhead (optional)"
               photoUri={photos.scale}
               onCapture={() => openCamera('scale')}
               onRetake={() => openCamera('scale')}
             />
-          </View>
-          <View style={styles.scaleHint}>
-            <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
-            <AppText variant="caption" color={colors.textSecondary}>
-              Photo of existing scale buildup on tap aerator or showerhead. Used as installation baseline.
-            </AppText>
           </View>
         </View>
 
@@ -288,13 +278,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     gap: spacing.md,
   },
-  instruction: { lineHeight: 18 },
-
   photoRow:  { flexDirection: 'row', gap: spacing.md, height: 220 },
 
-  scaleRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
-  scaleCardWrapper: { width: '45%', height: 160 },
-  scaleHint: { flex: 1, flexDirection: 'row', gap: spacing.xs, paddingTop: spacing.xs },
+  scaleRow: { flexDirection: 'row' },
+  scaleCardWrapper: { width: '48%', height: 160 },
 
   statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
   statusHint: { marginLeft: 'auto' },

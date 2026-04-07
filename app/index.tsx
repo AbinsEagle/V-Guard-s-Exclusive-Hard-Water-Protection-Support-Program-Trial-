@@ -137,31 +137,11 @@ export default function EntryScreen() {
             {errors.phone ? <FieldError msg={errors.phone} /> : null}
           </View>
 
-          {/* Trial info pill row */}
-          <View style={styles.infoRow}>
-            <InfoPill icon="shield-checkmark-outline" label="Scale Protection" />
-            <InfoPill icon="flash-outline"            label="Better Efficiency" />
-            <InfoPill icon="construct-outline"        label="Free Service" />
-          </View>
-
-          {/* Enrollment message */}
-          <View style={styles.enrollNote}>
-            <View style={styles.enrollNoteHeader}>
-              <View style={styles.enrollNoteIcon}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-              </View>
-              <AppText variant="label" color={colors.textPrimary}>Customer Selected for Trial</AppText>
-            </View>
-            <AppText variant="caption" color={colors.textSecondary} style={styles.enrollNoteText}>
-              This customer has been selected for{' '}
-              <AppText variant="caption" style={{ color: colors.primaryDark, fontWeight: '600' }}>
-                V-Guard's Exclusive Hard Water Protection Support Program (trial run).
-              </AppText>
-              {' '}Register the installation below. The data collected will help us understand
-              real-world performance and fine-tune the technology for hard-water users.
-            </AppText>
-            <AppText variant="caption2" color={colors.primary} style={styles.enrollNoteTeam}>
-              — V-Guard MED Research Division, Kochi
+          {/* Trial briefing — one line, no fluff */}
+          <View style={styles.briefingRow}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+            <AppText variant="caption" color={colors.textSecondary} style={{ flex: 1 }}>
+              Customer selected for the trial. Complete all 5 steps to register the installation.
             </AppText>
           </View>
 
@@ -198,17 +178,6 @@ function FieldError({ msg }: { msg: string }) {
   );
 }
 
-function InfoPill({ icon, label }: { icon: string; label: string }) {
-  return (
-    <View style={pillStyles.pill}>
-      <Ionicons name={icon as any} size={11} color={colors.primaryDark} />
-      <AppText variant="caption2" color={colors.primaryDark} style={pillStyles.label}>
-        {label}
-      </AppText>
-    </View>
-  );
-}
-
 const errStyles = StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -216,18 +185,6 @@ const errStyles = StyleSheet.create({
   },
 });
 
-const pillStyles = StyleSheet.create({
-  pill: {
-    flex: 1,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-    backgroundColor: 'rgba(196,122,0,0.12)',
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.sm - 2,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(196,122,0,0.20)',
-  },
-  label: { fontWeight: '600' },
-});
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
@@ -313,36 +270,12 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md + 30 + spacing.md,
   },
 
-  // ── Info pills ──
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+  briefingRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs,
+    backgroundColor: colors.successLight,
+    borderRadius: radius.md, padding: spacing.sm,
   },
 
-  // Enrollment note
-  enrollNote: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-    gap: spacing.xs,
-    ...shadows.xs,
-  },
-  enrollNoteHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    marginBottom: 2,
-  },
-  enrollNoteIcon: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  enrollNoteText: { lineHeight: 18 },
-  enrollNoteTeam: { fontStyle: 'italic', fontWeight: '600', marginTop: 2 },
 
   // ── CTA ──
   startBtn: {

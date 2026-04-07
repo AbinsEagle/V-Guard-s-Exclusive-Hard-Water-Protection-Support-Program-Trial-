@@ -77,6 +77,8 @@ export default function UnitRegistrationScreen() {
           type={"back" as any}
           barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39'] }}
           onBarcodeScanned={handleBarcodeScan}
+          barCodeScannerSettings={{ barCodeTypes: ['qr'] } as any}
+          onBarCodeScanned={handleBarcodeScan as any}
         >
           <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
             {/* Close */}
