@@ -52,6 +52,11 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
       excelFile:      endpoints.sharePoint.excelFileName,
     },
 
+    // Notification — Power Automate sends a summary email to this address after writing the Excel row
+    notification: {
+      notificationEmail: (endpoints as any).notification?.notificationEmail ?? '',
+    },
+
     // All installation fields — maps 1-to-1 with Excel columns
     installation: fields,
 

@@ -35,6 +35,10 @@ export default function ReviewScreen() {
     }
   };
 
+  const goTo = (route: string) => {
+    if (!submitting) router.push(route as any);
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -49,8 +53,12 @@ export default function ReviewScreen() {
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
+        <AppText variant="caption" color={colors.textSecondary} style={styles.editHint}>
+          Tap any section to edit
+        </AppText>
+
         {/* Linked Units */}
-        <Section title="Linked Units" icon="link">
+        <Section title="Linked Units" icon="link" onEdit={() => goTo('/install/scan-heater')}>
           <Row label="Heater Serial No." value={data.heaterSerialNumber} />
           <Row label="Cartridge No." value={data.cartridgeNumber} />
           {data.cartridgeBatchCode ? <Row label="Batch Code" value={data.cartridgeBatchCode} /> : null}
@@ -58,25 +66,25 @@ export default function ReviewScreen() {
         </Section>
 
         {/* Technician */}
-        <Section title="Service Person" icon="person-circle">
+        <Section title="Service Person" icon="person-circle" onEdit={() => goTo('/')}>
           <Row label="Name" value={data.technicianName} />
           <Row label="Mobile" value={`+91 ${data.technicianPhone}`} />
         </Section>
 
         {/* Customer */}
-        <Section title="Customer Details" icon="home">
+        <Section title="Customer Details" icon="home" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Name" value={data.customerName} />
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
           <Row label="Water Source" value={data.waterSource} />
-          {data.waterHardnessEstimate ? <Row label="Hardness Estimate" value={`${data.waterHardnessEstimate} ppm`} /> : null}
+          {data.waterHardnessEstimate ? <Row label="Hardness" value={`${data.waterHardnessEstimate} ppm`} /> : null}
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
         </Section>
 
         {/* Heater Specs */}
-        <Section title="Heater Specifications" icon="hardware-chip">
+        <Section title="Heater Specifications" icon="hardware-chip" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Model" value={data.heaterModel} />
           <Row label="Capacity" value={`${data.heaterCapacity} L`} />
           <Row label="Wattage" value={`${data.heaterWattage} W`} />
@@ -85,7 +93,7 @@ export default function ReviewScreen() {
         </Section>
 
         {/* Usage */}
-        <Section title="Daily Usage" icon="time">
+        <Section title="Daily Usage" icon="time" onEdit={() => goTo('/install/customer-form')}>
           <Row label="People/day" value={data.peoplePerDay} />
           <Row label="Baths/day" value={data.bathsPerDay} />
           {data.heaterUsagePattern ? <Row label="Usage Pattern" value={data.heaterUsagePattern} /> : null}
@@ -94,10 +102,10 @@ export default function ReviewScreen() {
         </Section>
 
         {/* Photos */}
-        <Section title="Photos" icon="camera">
+        <Section title="Photos" icon="camera" onEdit={() => goTo('/install/photos')}>
           <View style={styles.photosRow}>
-            <PhotoThumb label="Front View" uri={data.frontPhotoUri} />
-            <PhotoThumb label="Side View" uri={data.sidePhotoUri} />
+            <PhotoThumb label="Front" uri={data.frontPhotoUri} />
+            <PhotoThumb label="Side" uri={data.sidePhotoUri} />
             <PhotoThumb label="Scale" uri={data.scalePhotoUri} />
           </View>
         </Section>
@@ -136,7 +144,7 @@ export default function ReviewScreen() {
         ) : null}
 
         <AppText variant="caption" color={colors.textSecondary} style={styles.disclaimer}>
-          By submitting, you confirm that all details are accurate and the anti-scalant unit has been properly installed.
+          By submitting, you confirm all details are accurate and the unit has been properly installed.
         </AppText>
 
       </ScrollView>
@@ -144,18 +152,25 @@ export default function ReviewScreen() {
   );
 }
 
-function Section({ title, icon, children }: {
-  title: string; icon: string; children: React.ReactNode;
+// ─── Section — tappable card with edit chevron ────────────────────────────────
+
+function Section({ title, icon, onEdit, children }: {
+  title: string; icon: string; onEdit: () => void; children: React.ReactNode;
 }) {
   return (
     <View style={secStyles.wrapper}>
-      <View style={secStyles.titleRow}>
+      <TouchableOpacity style={secStyles.titleRow} onPress={onEdit} activeOpacity={0.7}>
         <View style={secStyles.iconBox}>
           <Ionicons name={icon as any} size={12} color={colors.white} />
         </View>
-        <AppText variant="sectionTitle" color={colors.textSecondary}>{title}</AppText>
-      </View>
-      <View style={secStyles.card}>{children}</View>
+        <AppText variant="sectionTitle" color={colors.textSecondary} style={{ flex: 1 }}>
+          {title}
+        </AppText>
+        <Ionicons name="pencil-outline" size={13} color={colors.primary} />
+      </TouchableOpacity>
+      <TouchableOpacity style={secStyles.card} onPress={onEdit} activeOpacity={0.85}>
+        {children}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -185,6 +200,8 @@ function PhotoThumb({ label, uri }: { label: string; uri: string | null }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
@@ -198,6 +215,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm,
   },
+  editHint: { textAlign: 'center', marginBottom: spacing.xs },
   photosRow: { flexDirection: 'row', gap: spacing.md },
   submitBtn: {
     flexDirection: 'row', backgroundColor: colors.success,

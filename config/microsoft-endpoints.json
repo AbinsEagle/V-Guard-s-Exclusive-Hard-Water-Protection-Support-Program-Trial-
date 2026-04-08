@@ -6,6 +6,11 @@
     "_hint": "Power Automate → New flow → Instant cloud flow → 'When an HTTP request is received'. Save the flow and paste the generated HTTP POST URL above."
   },
 
+  "notification": {
+    "notificationEmail": "REPLACE_WITH_YOUR_EMAIL_ADDRESS",
+    "_hint": "Every submission triggers an email to this address with the installation JSON as the body and photo folder path as a link. In Power Automate, add a 'Send an email (V2)' action after the Excel row is written: To = triggerBody()?['notification']?['notificationEmail'], Subject = 'New V-Guard Installation — ' + triggerBody()?['installation']?['heaterSerialNumber'], Body = 'Technician: ' + triggerBody()?['installation']?['technicianName'] + '<br>Customer: ' + triggerBody()?['installation']?['customerName'] + '<br>Photos folder: ' + triggerBody()?['destination']?['siteUrl'] + '/TrialPhotos/' + triggerBody()?['photoFolder'] + '<br><br>' + string(triggerBody()?['installation'])"
+  },
+
   "sharePoint": {
     "siteUrl": "REPLACE_WITH_YOUR_SHAREPOINT_SITE_URL",
     "_hint_siteUrl": "e.g. https://vguard.sharepoint.com/sites/HardWaterTrial",
