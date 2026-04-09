@@ -68,8 +68,8 @@ const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5', '6', '7'];
 
 interface Errors {
   customerName: string; customerWhatsApp: string; pincode: string;
-  waterSource: string; waterHardnessEstimate: string; waterQualityFeel: string;
-  heaterModel: string; heaterCapacity: string; heaterWattage: string;
+  waterSource: string; waterHardnessEstimate: string; existingScaleVisualRating: string; waterQualityFeel: string;
+  heaterModel: string; heaterCapacity: string; heaterWattage: string; heaterAgeYears: string; hotWaterTemperatureSetting: string;
   peoplePerDay: string; bathsPerDay: string; heaterUsagePattern: string;
 }
 
@@ -99,8 +99,8 @@ export default function CustomerFormScreen() {
   const [gpsLabel,  setGpsLabel]  = useState('');
   const [errors,    setErrors]    = useState<Errors>({
     customerName: '', customerWhatsApp: '', pincode: '',
-    waterSource: '', waterHardnessEstimate: '', waterQualityFeel: '',
-    heaterModel: '', heaterCapacity: '', heaterWattage: '',
+    waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
+    heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
     peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
   });
 
@@ -131,8 +131,8 @@ export default function CustomerFormScreen() {
   const validate = (): boolean => {
     const e: Errors = {
       customerName: '', customerWhatsApp: '', pincode: '',
-      waterSource: '', waterHardnessEstimate: '', waterQualityFeel: '',
-      heaterModel: '', heaterCapacity: '', heaterWattage: '',
+      waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
+      heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
       peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
     };
     if (!customerName.trim()) e.customerName = 'Required';
@@ -142,10 +142,13 @@ export default function CustomerFormScreen() {
     else if (!/^\d{6}$/.test(pincode.trim())) e.pincode = 'Enter a valid 6-digit pincode';
     if (!waterSource) e.waterSource = 'Please select water source';
     if (!waterHardness) e.waterHardnessEstimate = 'Please select TDS range';
+    if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–7)';
     if (!waterFeel.trim()) e.waterQualityFeel = 'Required — describe how the customer perceives the water';
     if (!heaterModel.trim()) e.heaterModel = 'Required';
     if (!resolvedCapacity.trim()) e.heaterCapacity = 'Please select capacity';
     if (!heaterWattage) e.heaterWattage = 'Please select wattage';
+    if (!heaterAge.trim()) e.heaterAgeYears = 'Required';
+    if (!tempSetting) e.hotWaterTemperatureSetting = 'Please select thermostat setting';
     if (!peoplePerDay.trim()) e.peoplePerDay = 'Required';
     if (!bathsPerDay.trim()) e.bathsPerDay = 'Required';
     if (!usagePattern) e.heaterUsagePattern = 'Please select heater on time';
@@ -288,7 +291,7 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
-          <Field label="Existing Scale Condition">
+          <Field label="Existing Scale Condition" required error={errors.existingScaleVisualRating}>
             <View style={styles.scaleRow}>
               <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>0 Clean</AppText>
               <View style={[styles.chipRow, { flex: 1 }]}>
@@ -296,7 +299,7 @@ export default function CustomerFormScreen() {
                   <Chip
                     key={n} label={n}
                     selected={scaleRating === n}
-                    onPress={() => setScaleRating(n)}
+                    onPress={() => { setScaleRating(n); setErrors((e) => ({ ...e, existingScaleVisualRating: '' })); }}
                   />
                 ))}
               </View>
@@ -363,14 +366,14 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
-          <Field label="Age (years)">
-            <View style={styles.inputBox}>
+          <Field label="Age (years)" required error={errors.heaterAgeYears}>
+            <View style={[styles.inputBox, errors.heaterAgeYears ? styles.inputErr : null]}>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. 3"
                 placeholderTextColor={colors.textHint}
                 value={heaterAge}
-                onChangeText={(t) => setHeaterAge(t.replace(/\D/g, '').slice(0, 2))}
+                onChangeText={(t) => { setHeaterAge(t.replace(/\D/g, '').slice(0, 2)); setErrors((e) => ({ ...e, heaterAgeYears: '' })); }}
                 keyboardType="number-pad"
                 maxLength={2}
               />
@@ -378,10 +381,10 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
-          <Field label="Thermostat Setting">
+          <Field label="Thermostat Setting" required error={errors.hotWaterTemperatureSetting}>
             <View style={styles.chipRow}>
               {TEMP_OPTIONS.map((o) => (
-                <Chip key={o.value} label={o.label} selected={tempSetting === o.value} onPress={() => setTempSetting(o.value)} />
+                <Chip key={o.value} label={o.label} selected={tempSetting === o.value} onPress={() => { setTempSetting(o.value); setErrors((e) => ({ ...e, hotWaterTemperatureSetting: '' })); }} />
               ))}
             </View>
           </Field>

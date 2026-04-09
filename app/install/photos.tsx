@@ -78,7 +78,7 @@ export default function PhotosScreen() {
     router.push('/install/review');
   };
 
-  const requiredCaptured = !!(photos.front && photos.side);
+  const requiredCaptured = !!(photos.front && photos.side && photos.scale);
 
   // ── Full-screen camera ──
   if (activeSlot && permission?.granted) {
@@ -151,13 +151,13 @@ export default function PhotosScreen() {
           />
         </View>
 
-        {/* Row 2: scale baseline (optional) */}
+        {/* Row 2: scale baseline (required) */}
         <View style={styles.scaleRow}>
           <View style={styles.scaleCardWrapper}>
             <PhotoCard
               slot="scale"
               label="Existing Scale"
-              hint="Tap / showerhead (optional)"
+              hint="Tap / showerhead"
               photoUri={photos.scale}
               onCapture={() => openCamera('scale')}
               onRetake={() => openCamera('scale')}
@@ -169,10 +169,10 @@ export default function PhotosScreen() {
         <View style={styles.statusRow}>
           <StatusDot captured={!!photos.front} label="Front" />
           <StatusDot captured={!!photos.side}  label="Side" />
-          <StatusDot captured={!!photos.scale} label="Scale" optional />
+          <StatusDot captured={!!photos.scale} label="Scale" />
           {!requiredCaptured && (
             <AppText variant="caption2" color={colors.textTertiary} style={styles.statusHint}>
-              Front + Side required
+              All 3 photos required
             </AppText>
           )}
         </View>
