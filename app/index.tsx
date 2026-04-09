@@ -265,17 +265,16 @@ const styles = StyleSheet.create({
 
   // ── Content ──
   content: {
-    flex: 1,
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     marginTop: -spacing.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xs,
-    paddingBottom: spacing.lg,
-    justifyContent: 'space-between',
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
   },
   topBlock: { gap: spacing.md },
-  bottomBlock: { gap: spacing.sm },
+  bottomBlock: { gap: spacing.sm, marginTop: spacing.sm },
 
   // ── Form card ──
   formCard: {
