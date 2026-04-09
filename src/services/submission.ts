@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import { InstallationData } from '../types';
 import endpoints from '../../config/microsoft-endpoints.json';
 
@@ -20,6 +21,15 @@ interface PhotoSet {
 async function uriToBase64(uri: string | null): Promise<string | null> {
   if (!uri) return null;
   try {
+    if (Platform.OS === 'web') {
+      // On web, photo URIs are blob URLs — fetch and convert to base64
+      const res   = await fetch(uri);
+      const buf   = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      bytes.forEach((b) => { bin += String.fromCharCode(b); });
+      return btoa(bin);
+    }
     return await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
@@ -42,10 +52,13 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     bathsPerDay,
     heaterAgeYears,
     waterSampleCollected,
+    cartridgeBatchCode,   // not an Excel column — excluded from payload
     ...rest
   } = data;
 
-  const photoFolder = `${data.heaterSerialNumber}_${data.cartridgeNumber}`;
+  // Folder name: customerName_pincode (spaces and special chars stripped)
+  const safeName    = data.customerName.replace(/[^a-zA-Z0-9]/g, '');
+  const photoFolder = `${safeName}_${data.pincode}`;
 
   // Normalise types for Excel / Power BI:
   //  • gpsLat / gpsLng       → float   (Power BI map visual requires numbers)
