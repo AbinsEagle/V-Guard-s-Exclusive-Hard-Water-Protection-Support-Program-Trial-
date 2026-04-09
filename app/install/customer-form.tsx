@@ -18,7 +18,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius } from '../../src/theme';
 import {
-  WaterSource, WaterHardness, HeaterAge, TempSetting, UsagePattern, ScaleRating,
+  WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
 } from '../../src/types';
 
 const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
@@ -50,12 +50,6 @@ const WATTAGE_OPTIONS: { label: string; value: string }[] = [
   { label: '5.5 kW', value: '5500' },
 ];
 
-const HEATER_AGE_OPTIONS: { label: string; value: HeaterAge }[] = [
-  { label: '< 1 yr',  value: '<1 year' },
-  { label: '1–3 yrs', value: '1-3 years' },
-  { label: '3–5 yrs', value: '3-5 years' },
-  { label: '> 5 yrs', value: '>5 years' },
-];
 
 const TEMP_OPTIONS: { label: string; value: TempSetting }[] = [
   { label: 'Low (<55°C)',       value: 'Low (<55°C)' },
@@ -100,7 +94,7 @@ export default function CustomerFormScreen() {
     data.heaterCapacity && !CAPACITY_OPTIONS.includes(data.heaterCapacity) ? data.heaterCapacity : ''
   );
   const [heaterWattage,   setHeaterWattage]   = useState(data.heaterWattage);
-  const [heaterAge,       setHeaterAge]       = useState<HeaterAge | ''>(data.heaterAgeYears);
+  const [heaterAge,       setHeaterAge]       = useState(data.heaterAgeYears || '');
   const [tempSetting,     setTempSetting]     = useState<TempSetting | ''>(data.hotWaterTemperatureSetting);
   const [peoplePerDay,    setPeoplePerDay]    = useState(data.peoplePerDay);
   const [bathsPerDay,     setBathsPerDay]     = useState(data.bathsPerDay);
@@ -178,7 +172,7 @@ export default function CustomerFormScreen() {
       heaterModel:               heaterModel.trim(),
       heaterCapacity:            resolvedCapacity.trim(),
       heaterWattage:             heaterWattage,
-      heaterAgeYears:            heaterAge as HeaterAge,
+      heaterAgeYears:            heaterAge,
       hotWaterTemperatureSetting: tempSetting as TempSetting,
       peoplePerDay:              peoplePerDay.trim(),
       bathsPerDay:               bathsPerDay.trim(),
@@ -398,11 +392,18 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
-          <Field label="Age">
-            <View style={styles.chipRow}>
-              {HEATER_AGE_OPTIONS.map((o) => (
-                <Chip key={o.value} label={o.label} selected={heaterAge === o.value} onPress={() => setHeaterAge(o.value)} />
-              ))}
+          <Field label="Age (years)">
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 3"
+                placeholderTextColor={colors.textHint}
+                value={heaterAge}
+                onChangeText={(t) => setHeaterAge(t.replace(/\D/g, '').slice(0, 2))}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <AppText variant="caption2" color={colors.textHint}>yrs</AppText>
             </View>
           </Field>
 

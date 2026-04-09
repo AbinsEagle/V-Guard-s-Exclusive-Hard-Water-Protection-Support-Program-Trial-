@@ -40,6 +40,7 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     gpsLng,
     peoplePerDay,
     bathsPerDay,
+    heaterAgeYears,
     waterSampleCollected,
     ...rest
   } = data;
@@ -47,16 +48,18 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
   const photoFolder = `${data.heaterSerialNumber}_${data.cartridgeNumber}`;
 
   // Normalise types for Excel / Power BI:
-  //  • gpsLat / gpsLng  → float   (Power BI map visual requires numbers)
-  //  • peoplePerDay / bathsPerDay → integer (numeric aggregations in Power BI)
-  //  • waterSampleCollected → "Yes"/"No" string (readable in Excel without boolean formatting)
+  //  • gpsLat / gpsLng       → float   (Power BI map visual requires numbers)
+  //  • peoplePerDay / bathsPerDay → integer
+  //  • heaterAgeYears        → integer (e.g. 3, not "1-3 years")
+  //  • waterSampleCollected  → "Yes"/"No" string (readable in Excel)
   const installation = {
     ...rest,
     waterSampleCollected: waterSampleCollected ? 'Yes' : 'No',
-    gpsLat:      gpsLat      ? parseFloat(gpsLat)      : null,
-    gpsLng:      gpsLng      ? parseFloat(gpsLng)      : null,
-    peoplePerDay: peoplePerDay ? parseInt(peoplePerDay, 10) : null,
-    bathsPerDay:  bathsPerDay  ? parseInt(bathsPerDay,  10) : null,
+    gpsLat:        gpsLat        ? parseFloat(gpsLat)           : null,
+    gpsLng:        gpsLng        ? parseFloat(gpsLng)           : null,
+    peoplePerDay:  peoplePerDay  ? parseInt(peoplePerDay, 10)   : null,
+    bathsPerDay:   bathsPerDay   ? parseInt(bathsPerDay,  10)   : null,
+    heaterAgeYears: heaterAgeYears ? parseInt(heaterAgeYears, 10) || null : null,
   };
 
   return {

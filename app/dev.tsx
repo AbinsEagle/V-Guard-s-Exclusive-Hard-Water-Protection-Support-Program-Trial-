@@ -22,7 +22,7 @@ import { colors, spacing, radius } from '../src/theme';
 import { buildPayload } from '../src/services/submission';
 import endpoints from '../config/microsoft-endpoints.json';
 import {
-  WaterSource, WaterHardness, HeaterAge, TempSetting, UsagePattern, ScaleRating,
+  WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
 } from '../src/types';
 
 type Tab = 'JSON' | 'TABLE' | 'EDIT' | 'CONFIG';
@@ -45,12 +45,6 @@ const HARDNESS_OPTS: { label: string; value: WaterHardness }[] = [
   { label: '1,000–2,000', value: '1000-2000' },
   { label: '2,000–4,000', value: '2000-4000' },
   { label: '> 4,000',     value: '>4000' },
-];
-const AGE_OPTS: { label: string; value: HeaterAge }[] = [
-  { label: '< 1 yr',  value: '<1 year' },
-  { label: '1–3 yrs', value: '1-3 years' },
-  { label: '3–5 yrs', value: '3-5 years' },
-  { label: '> 5 yrs', value: '>5 years' },
 ];
 const TEMP_OPTS: { label: string; value: TempSetting }[] = [
   { label: 'Low',    value: 'Low (<55°C)' },
@@ -390,11 +384,15 @@ export default function DevScreen() {
             />
           </EditSection>
 
-          <EditSection title="Heater Age">
-            <ChipRow
-              options={AGE_OPTS}
-              value={data.heaterAgeYears}
-              onSelect={(v) => editUpdate({ heaterAgeYears: v as HeaterAge })}
+          <EditSection title="Heater Age (years)">
+            <TextInput
+              style={styles.editTextInput}
+              value={data.heaterAgeYears || ''}
+              onChangeText={(t) => editUpdate({ heaterAgeYears: t.replace(/\D/g, '').slice(0, 2) })}
+              keyboardType="number-pad"
+              placeholder="e.g. 3"
+              placeholderTextColor={colors.textHint}
+              maxLength={2}
             />
           </EditSection>
 

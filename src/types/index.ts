@@ -11,7 +11,7 @@ export type WaterSource =
   | 'Other';
 
 export type WaterHardness = '300-500' | '500-1000' | '1000-2000' | '2000-4000' | '>4000';
-export type HeaterAge = '<1 year' | '1-3 years' | '3-5 years' | '>5 years';
+export type HeaterAge = string; // numeric string, e.g. "3" (years)
 export type ScaleRating = 'None' | 'Mild' | 'Moderate' | 'Severe';
 export type UsagePattern = 'Morning only' | 'Evening only' | 'Morning + Evening' | 'All day' | 'Seasonal (winter only)';
 export type TempSetting = 'Low (<55°C)' | 'Medium (55-65°C)' | 'High (>65°C)';
