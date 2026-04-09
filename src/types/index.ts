@@ -10,10 +10,10 @@ export type WaterSource =
   | 'Mixed / Not Sure'
   | 'Other';
 
-export type WaterHardness = '<150' | '150-300' | '300-500' | '>500';
+export type WaterHardness = '300-500' | '500-1000' | '1000-2000' | '2000-4000' | '>4000';
 export type HeaterAge = '<1 year' | '1-3 years' | '3-5 years' | '>5 years';
 export type ScaleRating = 'None' | 'Mild' | 'Moderate' | 'Severe';
-export type UsagePattern = 'Morning only' | 'Evening only' | 'Morning + Evening' | 'All day';
+export type UsagePattern = 'Morning only' | 'Evening only' | 'Morning + Evening' | 'All day' | 'Seasonal (winter only)';
 export type TempSetting = 'Low (<55°C)' | 'Medium (55-65°C)' | 'High (>65°C)';
 
 export interface InstallationData {
@@ -86,7 +86,7 @@ export const EMPTY_INSTALLATION: InstallationData = {
   peoplePerDay: '',
   bathsPerDay: '',
   heaterUsagePattern: '',
-  additionalComments: '',
+  additionalComments: '',  // kept for backward compat; not captured on form
   existingScaleVisualRating: '',
   frontPhotoUri: null,
   sidePhotoUri: null,

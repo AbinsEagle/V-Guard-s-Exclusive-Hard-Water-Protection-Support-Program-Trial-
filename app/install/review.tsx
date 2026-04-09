@@ -5,10 +5,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  TextInput,
-  Alert,
-  Platform,
-  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,76 +14,14 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
-import * as FileSystem from 'expo-file-system';
 import { submitInstallation } from '../../src/services/submission';
 
 const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [devOpen, setDevOpen] = useState(false);
-  const [devPass, setDevPass] = useState('');
-
-  const handleDevExport = async () => {
-    if (devPass !== 'vguard') {
-      Alert.alert('', 'Wrong password');
-      setDevPass('');
-      return;
-    }
-    setDevOpen(false);
-    setDevPass('');
-
-    // Encode photos as base64
-    async function toBase64(uri: string | null): Promise<string | null> {
-      if (!uri) return null;
-      try {
-        if (Platform.OS === 'web') {
-          // On web, uri may be a blob URL — fetch and convert
-          const res = await fetch(uri);
-          const buf = await res.arrayBuffer();
-          const bytes = new Uint8Array(buf);
-          let bin = '';
-          bytes.forEach(b => { bin += String.fromCharCode(b); });
-          return btoa(bin);
-        }
-        return await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      } catch {
-        return null;
-      }
-    }
-
-    const [frontB64, sideB64, scaleB64] = await Promise.all([
-      toBase64(data.frontPhotoUri),
-      toBase64(data.sidePhotoUri),
-      toBase64(data.scalePhotoUri),
-    ]);
-
-    const payload = {
-      ...data,
-      frontPhotoBase64: frontB64,
-      sidePhotoBase64:  sideB64,
-      scalePhotoBase64: scaleB64,
-    };
-
-    const json = JSON.stringify(payload, null, 2);
-    const filename = `installation_${data.heaterSerialNumber || 'draft'}.json`;
-
-    if (Platform.OS === 'web') {
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      Share.share({ message: json, title: filename });
-    }
-  };
+  const [submitting,   setSubmitting]   = useState(false);
+  const [submitError,  setSubmitError]  = useState('');
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -112,7 +46,13 @@ export default function ReviewScreen() {
           <Ionicons name="arrow-back" size={22} color={colors.white} />
         </TouchableOpacity>
         <AppText variant="h3" color={colors.white}>Review & Submit</AppText>
-        <View style={{ width: 38 }} />
+        <TouchableOpacity
+          style={styles.devChip}
+          onPress={() => router.push('/dev' as any)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <AppText variant="caption2" color="rgba(255,255,255,0.45)">DEV</AppText>
+        </TouchableOpacity>
       </View>
 
       <StepIndicator currentStep={5} totalSteps={5} labels={STEP_LABELS} />
@@ -127,7 +67,6 @@ export default function ReviewScreen() {
         <Section title="Linked Units" icon="link" onEdit={() => goTo('/install/scan-heater')}>
           <Row label="Heater Serial No." value={data.heaterSerialNumber} />
           <Row label="Cartridge No." value={data.cartridgeNumber} />
-          {data.cartridgeBatchCode ? <Row label="Batch Code" value={data.cartridgeBatchCode} /> : null}
           <Row label="Sample Collected" value={data.waterSampleCollected ? 'Yes' : 'No'} />
         </Section>
 
@@ -143,28 +82,27 @@ export default function ReviewScreen() {
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
           <Row label="Water Source" value={data.waterSource} />
-          {data.waterHardnessEstimate ? <Row label="Hardness" value={`${data.waterHardnessEstimate} ppm`} /> : null}
+          {data.waterHardnessEstimate ? <Row label="TDS Range" value={`${data.waterHardnessEstimate} ppm`} /> : null}
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
         </Section>
 
         {/* Heater Specs */}
-        <Section title="Heater Specifications" icon="hardware-chip" onEdit={() => goTo('/install/customer-form')}>
+        <Section title="Water Heater" icon="hardware-chip" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Model" value={data.heaterModel} />
-          <Row label="Capacity" value={`${data.heaterCapacity} L`} />
-          <Row label="Wattage" value={`${data.heaterWattage} W`} />
+          <Row label="Capacity" value={data.heaterCapacity} />
+          <Row label="Wattage" value={data.heaterWattage ? `${parseInt(data.heaterWattage) / 1000} kW` : '—'} />
           {data.heaterAgeYears ? <Row label="Age" value={data.heaterAgeYears} /> : null}
           {data.hotWaterTemperatureSetting ? <Row label="Thermostat" value={data.hotWaterTemperatureSetting} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={data.existingScaleVisualRating} /> : null}
         </Section>
 
         {/* Usage */}
         <Section title="Daily Usage" icon="time" onEdit={() => goTo('/install/customer-form')}>
           <Row label="People/day" value={data.peoplePerDay} />
-          <Row label="Baths/day" value={data.bathsPerDay} />
-          {data.heaterUsagePattern ? <Row label="Usage Pattern" value={data.heaterUsagePattern} /> : null}
-          {data.existingScaleVisualRating ? <Row label="Existing Scale" value={data.existingScaleVisualRating} /> : null}
-          {data.additionalComments ? <Row label="Comments" value={data.additionalComments} /> : null}
+          <Row label="Baths/person/day" value={data.bathsPerDay} />
+          {data.heaterUsagePattern ? <Row label="Heater On Time" value={data.heaterUsagePattern} /> : null}
         </Section>
 
         {/* Photos */}
@@ -213,29 +151,12 @@ export default function ReviewScreen() {
           By submitting, you confirm all details are accurate and the unit has been properly installed.
         </AppText>
 
-        {/* Dev export — intentionally low-profile */}
-        <TouchableOpacity onPress={() => { setDevOpen(v => !v); setDevPass(''); }} style={styles.devBtn}>
-          <AppText variant="caption2" color={colors.textHint}>dev</AppText>
-        </TouchableOpacity>
-        {devOpen && (
-          <TextInput
-            value={devPass}
-            onChangeText={setDevPass}
-            placeholder="password"
-            secureTextEntry
-            returnKeyType="done"
-            onSubmitEditing={handleDevExport}
-            autoFocus
-            style={styles.devInput}
-          />
-        )}
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Section — tappable card with edit chevron ────────────────────────────────
+// ─── Section ─────────────────────────────────────────────────────────────────
 
 function Section({ title, icon, onEdit, children }: {
   title: string; icon: string; onEdit: () => void; children: React.ReactNode;
@@ -293,6 +214,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
+  devChip: {
+    paddingHorizontal: spacing.sm, paddingVertical: 4,
+    borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+  },
   body: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
@@ -313,13 +238,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.error,
   },
   disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
-  devBtn: { alignSelf: 'center', padding: spacing.xs },
-  devInput: {
-    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
-    paddingVertical: 6, paddingHorizontal: spacing.sm,
-    fontSize: 14, color: colors.textSecondary, textAlign: 'center',
-    backgroundColor: colors.surface,
-  },
 });
 
 const secStyles = StyleSheet.create({

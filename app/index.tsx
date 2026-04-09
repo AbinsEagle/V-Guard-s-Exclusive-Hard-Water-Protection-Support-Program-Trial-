@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -14,11 +15,24 @@ import { AppText } from '../src/components/common/AppText';
 import { useInstallation } from '../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../src/theme';
 
+const FAQ = [
+  { q: 'What does this system do?',          a: 'Protects appliances from scale and improves bathing comfort.' },
+  { q: 'How does it help the water heater?', a: 'Reduces scale in heaters, pipelines, taps, and shower fittings.' },
+  { q: 'How does it protect appliances?',    a: 'Controls scale, improving efficiency and extending appliance life.' },
+  { q: 'How does it benefit skin and hair?', a: 'Water feels softer, better lather, less dryness and stickiness.' },
+  { q: 'Does it reduce soap scum?',          a: 'Yes — less scum on skin, fittings, and surfaces.' },
+  { q: 'Does it change TDS or hardness?',    a: 'No — controls hard water effects without altering readings.' },
+  { q: 'Is it safe for daily use?',          a: 'Yes. Non-toxic, potable-water safe. IS 10500 & GB 5749 compliant.' },
+  { q: 'Does it help with corrosion?',       a: 'Yes — forms a protective layer on metal surfaces.' },
+  { q: 'How long does one cartridge last?',  a: 'Up to 1 year or 25,000 L, whichever comes first.' },
+];
+
 export default function EntryScreen() {
   const { update } = useInstallation();
   const [name,  setName]  = useState('');
   const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState({ name: '', phone: '' });
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const validate = () => {
     const e = { name: '', phone: '' };
@@ -38,10 +52,8 @@ export default function EntryScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* ── Dark header bar ── */}
         <View style={styles.header}>
           <View style={styles.logoRow}>
@@ -137,6 +149,33 @@ export default function EntryScreen() {
             {errors.phone ? <FieldError msg={errors.phone} /> : null}
           </View>
 
+          {/* FAQ accordion */}
+          <View style={faqStyles.container}>
+            {FAQ.map((item, i) => (
+              <View key={i} style={faqStyles.item}>
+                <TouchableOpacity
+                  style={faqStyles.question}
+                  onPress={() => setOpenFaq(openFaq === i ? null : i)}
+                  activeOpacity={0.75}
+                >
+                  <AppText variant="caption" color={colors.textPrimary} style={faqStyles.qText}>
+                    {item.q}
+                  </AppText>
+                  <Ionicons
+                    name={openFaq === i ? 'chevron-down' : 'chevron-forward'}
+                    size={14}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
+                {openFaq === i && (
+                  <AppText variant="caption" color={colors.textSecondary} style={faqStyles.answer}>
+                    {item.a}
+                  </AppText>
+                )}
+              </View>
+            ))}
+          </View>
+
           {/* Trial briefing — one line, no fluff */}
           <View style={styles.briefingRow}>
             <Ionicons name="checkmark-circle" size={14} color={colors.success} />
@@ -147,7 +186,7 @@ export default function EntryScreen() {
 
           </View>{/* end topBlock */}
 
-          {/* Bottom block — CTA + footer, fixed at bottom */}
+          {/* CTA + footer */}
           <View style={styles.bottomBlock}>
           <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.75}>
             <AppText variant="label" color={colors.headerBg}>Start Installation</AppText>
@@ -159,9 +198,10 @@ export default function EntryScreen() {
           <AppText variant="caption2" color={colors.textTertiary} style={styles.footer}>
             For internal use only · V-Guard R&D
           </AppText>
-          </View>{/* end bottomBlock */}
+          </View>
 
         </View>
+      </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -292,4 +332,27 @@ const styles = StyleSheet.create({
   },
 
   footer: { textAlign: 'center' },
+});
+
+const faqStyles = StyleSheet.create({
+  container: {
+    borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  item: {
+    borderBottomWidth: 0.5, borderBottomColor: colors.border,
+  },
+  question: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm, paddingVertical: spacing.sm,
+    gap: spacing.xs,
+    borderLeftWidth: 3, borderLeftColor: colors.primary,
+  },
+  qText: { flex: 1, fontWeight: '500' },
+  answer: {
+    paddingHorizontal: spacing.md, paddingBottom: spacing.sm,
+    lineHeight: 18,
+  },
 });
