@@ -18,6 +18,7 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
+import * as FileSystem from 'expo-file-system';
 import { submitInstallation } from '../../src/services/submission';
 
 const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
@@ -29,14 +30,52 @@ export default function ReviewScreen() {
   const [devOpen, setDevOpen] = useState(false);
   const [devPass, setDevPass] = useState('');
 
-  const handleDevExport = () => {
+  const handleDevExport = async () => {
     if (devPass !== 'vguard') {
       Alert.alert('', 'Wrong password');
       setDevPass('');
       return;
     }
-    const json = JSON.stringify(data, null, 2);
+    setDevOpen(false);
+    setDevPass('');
+
+    // Encode photos as base64
+    async function toBase64(uri: string | null): Promise<string | null> {
+      if (!uri) return null;
+      try {
+        if (Platform.OS === 'web') {
+          // On web, uri may be a blob URL — fetch and convert
+          const res = await fetch(uri);
+          const buf = await res.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let bin = '';
+          bytes.forEach(b => { bin += String.fromCharCode(b); });
+          return btoa(bin);
+        }
+        return await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch {
+        return null;
+      }
+    }
+
+    const [frontB64, sideB64, scaleB64] = await Promise.all([
+      toBase64(data.frontPhotoUri),
+      toBase64(data.sidePhotoUri),
+      toBase64(data.scalePhotoUri),
+    ]);
+
+    const payload = {
+      ...data,
+      frontPhotoBase64: frontB64,
+      sidePhotoBase64:  sideB64,
+      scalePhotoBase64: scaleB64,
+    };
+
+    const json = JSON.stringify(payload, null, 2);
     const filename = `installation_${data.heaterSerialNumber || 'draft'}.json`;
+
     if (Platform.OS === 'web') {
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -48,8 +87,6 @@ export default function ReviewScreen() {
     } else {
       Share.share({ message: json, title: filename });
     }
-    setDevOpen(false);
-    setDevPass('');
   };
 
   const handleSubmit = async () => {
