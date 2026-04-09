@@ -36,10 +36,28 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     frontPhotoUri,
     sidePhotoUri,
     scalePhotoUri,
-    ...fields
+    gpsLat,
+    gpsLng,
+    peoplePerDay,
+    bathsPerDay,
+    waterSampleCollected,
+    ...rest
   } = data;
 
   const photoFolder = `${data.heaterSerialNumber}_${data.cartridgeNumber}`;
+
+  // Normalise types for Excel / Power BI:
+  //  • gpsLat / gpsLng  → float   (Power BI map visual requires numbers)
+  //  • peoplePerDay / bathsPerDay → integer (numeric aggregations in Power BI)
+  //  • waterSampleCollected → "Yes"/"No" string (readable in Excel without boolean formatting)
+  const installation = {
+    ...rest,
+    waterSampleCollected: waterSampleCollected ? 'Yes' : 'No',
+    gpsLat:      gpsLat      ? parseFloat(gpsLat)      : null,
+    gpsLng:      gpsLng      ? parseFloat(gpsLng)      : null,
+    peoplePerDay: peoplePerDay ? parseInt(peoplePerDay, 10) : null,
+    bathsPerDay:  bathsPerDay  ? parseInt(bathsPerDay,  10) : null,
+  };
 
   return {
     submittedAt:  new Date().toISOString(),
@@ -58,7 +76,7 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     },
 
     // All installation fields — maps 1-to-1 with Excel columns
-    installation: fields,
+    installation,
 
     // Base64 photos — Power Automate decodes and uploads to:
     // {photosLibrary}/{photoFolder}/front.jpg  |  side.jpg  |  scale.jpg
