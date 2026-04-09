@@ -5,6 +5,10 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  TextInput,
+  Alert,
+  Platform,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -22,6 +26,31 @@ export default function ReviewScreen() {
   const { data } = useInstallation();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [devOpen, setDevOpen] = useState(false);
+  const [devPass, setDevPass] = useState('');
+
+  const handleDevExport = () => {
+    if (devPass !== 'vguard') {
+      Alert.alert('', 'Wrong password');
+      setDevPass('');
+      return;
+    }
+    const json = JSON.stringify(data, null, 2);
+    const filename = `installation_${data.heaterSerialNumber || 'draft'}.json`;
+    if (Platform.OS === 'web') {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      Share.share({ message: json, title: filename });
+    }
+    setDevOpen(false);
+    setDevPass('');
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -147,6 +176,23 @@ export default function ReviewScreen() {
           By submitting, you confirm all details are accurate and the unit has been properly installed.
         </AppText>
 
+        {/* Dev export — intentionally low-profile */}
+        <TouchableOpacity onPress={() => { setDevOpen(v => !v); setDevPass(''); }} style={styles.devBtn}>
+          <AppText variant="caption2" color={colors.textHint}>dev</AppText>
+        </TouchableOpacity>
+        {devOpen && (
+          <TextInput
+            value={devPass}
+            onChangeText={setDevPass}
+            placeholder="password"
+            secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={handleDevExport}
+            autoFocus
+            style={styles.devInput}
+          />
+        )}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -230,6 +276,13 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.error,
   },
   disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
+  devBtn: { alignSelf: 'center', padding: spacing.xs },
+  devInput: {
+    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+    paddingVertical: 6, paddingHorizontal: spacing.sm,
+    fontSize: 14, color: colors.textSecondary, textAlign: 'center',
+    backgroundColor: colors.surface,
+  },
 });
 
 const secStyles = StyleSheet.create({
