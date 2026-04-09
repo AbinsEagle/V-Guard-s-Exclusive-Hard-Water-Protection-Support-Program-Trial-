@@ -123,7 +123,7 @@ export default function UnitRegistrationScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.white} />
         </TouchableOpacity>
-        <AppText variant="h3" color={colors.white}>System Registration</AppText>
+        <AppText variant="h3" color={colors.white}>Product Registration</AppText>
         <View style={{ width: 38 }} />
       </View>
 
@@ -222,10 +222,15 @@ export default function UnitRegistrationScreen() {
             <View style={[styles.checkbox, sampleCollected && styles.checkboxChecked]}>
               {sampleCollected && <Ionicons name="checkmark" size={14} color={colors.white} />}
             </View>
-            <AppText variant="label" color={colors.textPrimary} style={{ flex: 1 }}>
-              Sample collected
-            </AppText>
-            <AppText variant="caption2" color={colors.textSecondary}>
+            <View style={{ flex: 1 }}>
+              <AppText variant="label" color={colors.textPrimary}>
+                Water Sample Collected
+              </AppText>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.sampleHint}>
+                Use the sample bottle in the package, collect the water sample, and send it back to the research centre.
+              </AppText>
+            </View>
+            <AppText variant="caption2" color={sampleCollected ? colors.primary : colors.textSecondary} style={{ fontWeight: '700' }}>
               {sampleCollected ? 'Yes' : 'No'}
             </AppText>
           </TouchableOpacity>
@@ -292,6 +297,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
   },
   checkRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+  sampleHint: { lineHeight: 16, marginTop: 2 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,
     borderWidth: 1.5, borderColor: colors.border,
