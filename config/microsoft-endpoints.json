@@ -1,0 +1,57 @@
+{
+  "_readme": "V-Guard Hard Water Protection Trial — Microsoft 365 endpoints. Edit this file and commit to update the app. All REPLACE_WITH_* values must be filled before going live.",
+
+  "powerAutomate": {
+    "installationWebhookUrl": "https://defaultd58e596dd48d46c087fca9d22fc9eb.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/dec96d093d0244f48f0a6b79cdc15e72/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=sDyQtW8Z92PmpABpfTrLDc40ctnlF0OyuFuScROPCg0",
+    "_hint": "Power Automate → New flow → Instant cloud flow → 'When an HTTP request is received'. Save the flow and paste the generated HTTP POST URL above."
+  },
+
+  "notification": {
+    "notificationEmail": "abins.michael@vguard.in",
+    "_hint": "Every submission triggers an email to this address with the installation JSON as the body and photo folder path as a link. In Power Automate, add a 'Send an email (V2)' action after the Excel row is written: To = triggerBody()?['notification']?['notificationEmail'], Subject = 'New V-Guard Installation — ' + triggerBody()?['installation']?['heaterSerialNumber'], Body = 'Technician: ' + triggerBody()?['installation']?['technicianName'] + '<br>Customer: ' + triggerBody()?['installation']?['customerName'] + '<br>Photos folder: ' + triggerBody()?['destination']?['siteUrl'] + '/TrialPhotos/' + triggerBody()?['photoFolder'] + '<br><br>' + string(triggerBody()?['installation'])"
+  },
+
+  "sharePoint": {
+    "siteUrl": "https://vguard.sharepoint.com/sites/HardWaterTrial",
+    "_hint_siteUrl": "e.g. https://vguard.sharepoint.com/sites/HardWaterTrial",
+    "photosLibraryName": "TrialPhotos",
+    "_hint_photos": "Photos are saved as:  TrialPhotos/{heaterSerialNumber}_{cartridgeNumber}/front.jpg  |  side.jpg  |  scale.jpg",
+    "excelFileName": "VGuard_Trial_Installations.xlsx",
+    "_hint_excel": "Excel file must exist in the SharePoint site Documents library. Column headers must match the list in EXCEL_COLUMNS below exactly."
+  },
+
+  "EXCEL_COLUMNS": [
+    "submittedAt",
+    "installationDate",
+    "technicianName",
+    "technicianPhone",
+    "heaterSerialNumber",
+    "cartridgeNumber",
+    "waterSampleCollected",
+    "customerName",
+    "customerWhatsApp",
+    "pincode",
+    "gpsLat",
+    "gpsLng",
+    "gpsAccuracyMeters",
+    "waterSource",
+    "waterHardnessEstimate",
+    "waterQualityFeel",
+    "heaterModel",
+    "heaterCapacity",
+    "heaterWattage",
+    "heaterAgeYears",
+    "hotWaterTemperatureSetting",
+    "peoplePerDay",
+    "bathsPerDay",
+    "heaterUsagePattern",
+    "existingScaleVisualRating",
+    "additionalComments",
+    "photoFolder",
+    "frontPhotoUrl",
+    "sidePhotoUrl",
+    "scalePhotoUrl"
+  ],
+
+  "_photoFolderNote": "Power Automate flow must: (1) create folder {heaterSerialNumber}_{cartridgeNumber} in TrialPhotos library, (2) upload front/side/scale base64 images, (3) write one row in Excel with SharePoint photo URLs in the last 3 columns."
+}

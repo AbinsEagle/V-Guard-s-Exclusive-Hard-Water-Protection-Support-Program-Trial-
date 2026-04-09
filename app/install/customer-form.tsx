@@ -4,7 +4,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -16,52 +15,95 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing } from '../../src/theme';
-import { WaterSource } from '../../src/types';
+import { colors, spacing, radius } from '../../src/theme';
+import {
+  WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
+} from '../../src/types';
 
-const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 const WATER_SOURCES: { label: string; value: WaterSource }[] = [
-  { label: 'Borewell', value: 'Borewell' },
-  { label: 'Municipal', value: 'Municipal' },
-  { label: 'Tank', value: 'Tank' },
-  { label: 'Other', value: 'Other' },
+  { label: 'Borewell',              value: 'Borewell' },
+  { label: 'Municipal / BWSSB',     value: 'Municipal / BWSSB' },
+  { label: 'Open Well',             value: 'Open Well' },
+  { label: 'River / Canal',         value: 'River / Canal' },
+  { label: 'Rainwater Harvesting',  value: 'Rainwater Harvesting' },
+  { label: 'Water Tanker',          value: 'Water Tanker' },
+  { label: 'Mixed / Not Sure',      value: 'Mixed / Not Sure' },
+  { label: 'Other',                 value: 'Other' },
 ];
 
+const HARDNESS_OPTIONS: { label: string; value: WaterHardness }[] = [
+  { label: '300–500',        value: '300-500' },
+  { label: '500–1,000',      value: '500-1000' },
+  { label: '1,000–2,000',    value: '1000-2000' },
+  { label: '2,000–4,000',    value: '2000-4000' },
+  { label: '> 4,000',        value: '>4000' },
+];
+
+const CAPACITY_OPTIONS = ['3L', '6L', '10L', '15L', '25L', '50L', 'Other'];
+
+const WATTAGE_OPTIONS: { label: string; value: string }[] = [
+  { label: '2 kW',   value: '2000' },
+  { label: '3 kW',   value: '3000' },
+  { label: '5.5 kW', value: '5500' },
+];
+
+
+const TEMP_OPTIONS: { label: string; value: TempSetting }[] = [
+  { label: 'Low (<55°C)',       value: 'Low (<55°C)' },
+  { label: 'Medium (55–65°C)', value: 'Medium (55-65°C)' },
+  { label: 'High (>65°C)',     value: 'High (>65°C)' },
+];
+
+const USAGE_OPTIONS: { label: string; value: UsagePattern }[] = [
+  { label: 'Morning',          value: 'Morning only' },
+  { label: 'Evening',          value: 'Evening only' },
+  { label: 'Morn + Eve',       value: 'Morning + Evening' },
+  { label: 'All day',          value: 'All day' },
+  { label: 'Seasonal',         value: 'Seasonal (winter only)' },
+];
+
+const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5', '6', '7'];
+
 interface Errors {
-  customerWhatsApp: string;
-  pincode: string;
-  waterSource: string;
-  heaterModel: string;
-  heaterCapacity: string;
-  heaterWattage: string;
-  peoplePerDay: string;
-  bathsPerDay: string;
+  customerName: string; customerWhatsApp: string; pincode: string;
+  waterSource: string; waterHardnessEstimate: string; existingScaleVisualRating: string; waterQualityFeel: string;
+  heaterModel: string; heaterCapacity: string; heaterWattage: string; heaterAgeYears: string; hotWaterTemperatureSetting: string;
+  peoplePerDay: string; bathsPerDay: string; heaterUsagePattern: string;
 }
 
 export default function CustomerFormScreen() {
   const { data, update } = useInstallation();
 
-  const [whatsApp, setWhatsApp] = useState(data.customerWhatsApp);
-  const [pincode, setPincode] = useState(data.pincode);
-  const [waterSource, setWaterSource] = useState<WaterSource | ''>(data.waterSource);
-  const [waterFeel, setWaterFeel] = useState(data.waterQualityFeel);
-  const [heaterModel, setHeaterModel] = useState(data.heaterModel);
-  const [heaterCapacity, setHeaterCapacity] = useState(data.heaterCapacity);
-  const [heaterWattage, setHeaterWattage] = useState(data.heaterWattage);
-  const [peoplePerDay, setPeoplePerDay] = useState(data.peoplePerDay);
-  const [bathsPerDay, setBathsPerDay] = useState(data.bathsPerDay);
-  const [comments, setComments] = useState(data.additionalComments);
+  const [customerName,    setCustomerName]    = useState(data.customerName);
+  const [whatsApp,        setWhatsApp]        = useState(data.customerWhatsApp);
+  const [pincode,         setPincode]         = useState(data.pincode);
+  const [waterSource,     setWaterSource]     = useState<WaterSource | ''>(data.waterSource);
+  const [waterHardness,   setWaterHardness]   = useState<WaterHardness | ''>(data.waterHardnessEstimate);
+  const [waterFeel,       setWaterFeel]       = useState(data.waterQualityFeel);
+  const [heaterModel,     setHeaterModel]     = useState(data.heaterModel);
+  const [heaterCapacity,  setHeaterCapacity]  = useState(data.heaterCapacity);
+  const [capacityOther,   setCapacityOther]   = useState(
+    data.heaterCapacity && !CAPACITY_OPTIONS.includes(data.heaterCapacity) ? data.heaterCapacity : ''
+  );
+  const [heaterWattage,   setHeaterWattage]   = useState(data.heaterWattage);
+  const [heaterAge,       setHeaterAge]       = useState(data.heaterAgeYears || '');
+  const [tempSetting,     setTempSetting]     = useState<TempSetting | ''>(data.hotWaterTemperatureSetting);
+  const [peoplePerDay,    setPeoplePerDay]    = useState(data.peoplePerDay);
+  const [bathsPerDay,     setBathsPerDay]     = useState(data.bathsPerDay);
+  const [usagePattern,    setUsagePattern]    = useState<UsagePattern | ''>(data.heaterUsagePattern);
+  const [scaleRating,     setScaleRating]     = useState<ScaleRating | ''>(data.existingScaleVisualRating);
 
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
-  const [gpsLabel, setGpsLabel] = useState('');
-  const [errors, setErrors] = useState<Errors>({
-    customerWhatsApp: '', pincode: '', waterSource: '',
-    heaterModel: '', heaterCapacity: '', heaterWattage: '',
-    peoplePerDay: '', bathsPerDay: '',
+  const [gpsLabel,  setGpsLabel]  = useState('');
+  const [errors,    setErrors]    = useState<Errors>({
+    customerName: '', customerWhatsApp: '', pincode: '',
+    waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
+    heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
+    peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
   });
 
-  // Auto-capture date on mount
   useEffect(() => {
     update({ installationDate: new Date().toISOString() });
     fetchLocation();
@@ -73,9 +115,8 @@ export default function CustomerFormScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') { setGpsStatus('error'); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const { latitude, longitude } = loc.coords;
-      update({ gpsLat: String(latitude), gpsLng: String(longitude) });
-      // Reverse geocode for display
+      const { latitude, longitude, accuracy } = loc.coords;
+      update({ gpsLat: String(latitude), gpsLng: String(longitude), gpsAccuracyMeters: accuracy });
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       setGpsLabel(`${place?.district || place?.city || ''}, ${place?.region || ''}`);
       setGpsStatus('done');
@@ -84,22 +125,33 @@ export default function CustomerFormScreen() {
     }
   };
 
+  // Resolve capacity value — chip label or custom text
+  const resolvedCapacity = heaterCapacity === 'Other' ? capacityOther : heaterCapacity;
+
   const validate = (): boolean => {
     const e: Errors = {
-      customerWhatsApp: '', pincode: '', waterSource: '',
-      heaterModel: '', heaterCapacity: '', heaterWattage: '',
-      peoplePerDay: '', bathsPerDay: '',
+      customerName: '', customerWhatsApp: '', pincode: '',
+      waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
+      heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
+      peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
     };
-    if (!whatsApp.trim()) e.customerWhatsApp = 'WhatsApp number is required';
+    if (!customerName.trim()) e.customerName = 'Required';
+    if (!whatsApp.trim()) e.customerWhatsApp = 'Required';
     else if (!/^[6-9]\d{9}$/.test(whatsApp.trim())) e.customerWhatsApp = 'Enter a valid 10-digit number';
-    if (!pincode.trim()) e.pincode = 'Pincode is required';
+    if (!pincode.trim()) e.pincode = 'Required';
     else if (!/^\d{6}$/.test(pincode.trim())) e.pincode = 'Enter a valid 6-digit pincode';
     if (!waterSource) e.waterSource = 'Please select water source';
-    if (!heaterModel.trim()) e.heaterModel = 'Heater model is required';
-    if (!heaterCapacity.trim()) e.heaterCapacity = 'Capacity is required';
-    if (!heaterWattage.trim()) e.heaterWattage = 'Wattage is required';
+    if (!waterHardness) e.waterHardnessEstimate = 'Please select TDS range';
+    if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–7)';
+    if (!waterFeel.trim()) e.waterQualityFeel = 'Required — describe how the customer perceives the water';
+    if (!heaterModel.trim()) e.heaterModel = 'Required';
+    if (!resolvedCapacity.trim()) e.heaterCapacity = 'Please select capacity';
+    if (!heaterWattage) e.heaterWattage = 'Please select wattage';
+    if (!heaterAge.trim()) e.heaterAgeYears = 'Required';
+    if (!tempSetting) e.hotWaterTemperatureSetting = 'Please select thermostat setting';
     if (!peoplePerDay.trim()) e.peoplePerDay = 'Required';
     if (!bathsPerDay.trim()) e.bathsPerDay = 'Required';
+    if (!usagePattern) e.heaterUsagePattern = 'Please select heater on time';
     setErrors(e);
     return Object.values(e).every((v) => !v);
   };
@@ -107,16 +159,21 @@ export default function CustomerFormScreen() {
   const handleContinue = () => {
     if (!validate()) return;
     update({
-      customerWhatsApp: whatsApp.trim(),
-      pincode: pincode.trim(),
-      waterSource: waterSource as WaterSource,
-      waterQualityFeel: waterFeel.trim(),
-      heaterModel: heaterModel.trim(),
-      heaterCapacity: heaterCapacity.trim(),
-      heaterWattage: heaterWattage.trim(),
-      peoplePerDay: peoplePerDay.trim(),
-      bathsPerDay: bathsPerDay.trim(),
-      additionalComments: comments.trim(),
+      customerName:              customerName.trim(),
+      customerWhatsApp:          whatsApp.trim(),
+      pincode:                   pincode.trim(),
+      waterSource:               waterSource as WaterSource,
+      waterHardnessEstimate:     waterHardness as WaterHardness,
+      waterQualityFeel:          waterFeel.trim(),
+      heaterModel:               heaterModel.trim(),
+      heaterCapacity:            resolvedCapacity.trim(),
+      heaterWattage:             heaterWattage,
+      heaterAgeYears:            heaterAge,
+      hotWaterTemperatureSetting: tempSetting as TempSetting,
+      peoplePerDay:              peoplePerDay.trim(),
+      bathsPerDay:               bathsPerDay.trim(),
+      heaterUsagePattern:        usagePattern as UsagePattern,
+      existingScaleVisualRating: scaleRating as ScaleRating,
     });
     router.push('/install/photos');
   };
@@ -131,53 +188,67 @@ export default function CustomerFormScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={4} totalSteps={6} labels={STEP_LABELS} />
+      <StepIndicator currentStep={3} totalSteps={5} labels={STEP_LABELS} />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ── Auto-captured ── */}
-          <SectionHeader title="Auto-Captured" icon="flash" />
-          <View style={styles.autoRow}>
-            <AutoField
-              icon="calendar-outline"
-              label="Date"
-              value={new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-            />
-            <AutoField
-              icon="location-outline"
-              label="GPS Location"
-              value={
-                gpsStatus === 'fetching' ? 'Fetching...' :
-                gpsStatus === 'done' ? gpsLabel || 'Captured' :
-                gpsStatus === 'error' ? 'Unavailable' : 'Pending'
-              }
-              status={gpsStatus}
-              onRetry={fetchLocation}
-            />
+          {/* ── Auto-captured pills ── */}
+          <View style={styles.autoPillRow}>
+            <View style={styles.autoPill}>
+              <Ionicons name="calendar-outline" size={13} color={colors.primaryDark} />
+              <AppText variant="caption2" color={colors.primaryDark} style={styles.autoPillText}>
+                {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </AppText>
+            </View>
+            <TouchableOpacity
+              style={[styles.autoPill, gpsStatus === 'error' && styles.autoPillError]}
+              onPress={gpsStatus === 'error' ? fetchLocation : undefined}
+              activeOpacity={gpsStatus === 'error' ? 0.7 : 1}
+            >
+              <Ionicons
+                name={gpsStatus === 'done' ? 'location' : 'location-outline'}
+                size={13}
+                color={gpsStatus === 'error' ? colors.error : colors.primaryDark}
+              />
+              <AppText
+                variant="caption2"
+                color={gpsStatus === 'error' ? colors.error : colors.primaryDark}
+                style={styles.autoPillText}
+              >
+                {gpsStatus === 'fetching' ? 'Getting GPS…' :
+                 gpsStatus === 'done'     ? (gpsLabel || 'GPS Captured') :
+                 gpsStatus === 'error'    ? 'Tap to retry' : 'GPS pending'}
+              </AppText>
+            </TouchableOpacity>
           </View>
 
           {/* ── Customer ── */}
-          <SectionHeader title="Customer Information" icon="person" />
+          <SectionHeader title="Customer" icon="person" />
+
+          <Field label="Name" required error={errors.customerName}>
+            <View style={[styles.inputBox, errors.customerName ? styles.inputErr : null]}>
+              <TextInput
+                style={styles.input} placeholder="Full name"
+                placeholderTextColor={colors.textHint} value={customerName}
+                onChangeText={(t) => { setCustomerName(t); setErrors((e) => ({ ...e, customerName: '' })); }}
+                autoCapitalize="words"
+              />
+            </View>
+          </Field>
 
           <Field label="WhatsApp Number" required error={errors.customerWhatsApp}>
             <View style={[styles.inputBox, errors.customerWhatsApp ? styles.inputErr : null]}>
               <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>+91</AppText>
               <View style={styles.prefixDiv} />
               <TextInput
-                style={styles.input}
-                placeholder="10-digit number"
-                placeholderTextColor={colors.textHint}
-                value={whatsApp}
+                style={styles.input} placeholder="10-digit number"
+                placeholderTextColor={colors.textHint} value={whatsApp}
                 onChangeText={(t) => { setWhatsApp(t.replace(/\D/g, '').slice(0, 10)); setErrors((e) => ({ ...e, customerWhatsApp: '' })); }}
-                keyboardType="number-pad"
-                maxLength={10}
+                keyboardType="number-pad" maxLength={10}
               />
             </View>
           </Field>
@@ -185,156 +256,189 @@ export default function CustomerFormScreen() {
           <Field label="Pincode" required error={errors.pincode}>
             <View style={[styles.inputBox, errors.pincode ? styles.inputErr : null]}>
               <TextInput
-                style={styles.input}
-                placeholder="6-digit area pincode"
-                placeholderTextColor={colors.textHint}
-                value={pincode}
+                style={styles.input} placeholder="6-digit pincode"
+                placeholderTextColor={colors.textHint} value={pincode}
                 onChangeText={(t) => { setPincode(t.replace(/\D/g, '').slice(0, 6)); setErrors((e) => ({ ...e, pincode: '' })); }}
-                keyboardType="number-pad"
-                maxLength={6}
+                keyboardType="number-pad" maxLength={6}
               />
             </View>
           </Field>
 
+          {/* ── Water Quality ── */}
+          <SectionHeader title="Water Quality" icon="water" />
+
           <Field label="Water Source" required error={errors.waterSource}>
             <View style={styles.chipRow}>
               {WATER_SOURCES.map((s) => (
-                <TouchableOpacity
-                  key={s.value}
-                  style={[styles.chip, waterSource === s.value && styles.chipSelected]}
+                <Chip
+                  key={s.value} label={s.label}
+                  selected={waterSource === s.value}
                   onPress={() => { setWaterSource(s.value); setErrors((e) => ({ ...e, waterSource: '' })); }}
-                  activeOpacity={0.75}
-                >
-                  <AppText
-                    variant="caption"
-                    color={waterSource === s.value ? colors.primary : colors.textSecondary}
-                    style={waterSource === s.value ? styles.chipTextSelected : undefined}
-                  >
-                    {s.label}
-                  </AppText>
-                </TouchableOpacity>
+                />
               ))}
             </View>
           </Field>
 
-          <Field label="How does the water feel? (Customer's words)">
-            <View style={styles.inputBox}>
+          <Field label="Water Hardness (TDS)" required error={errors.waterHardnessEstimate}>
+            <View style={styles.chipRow}>
+              {HARDNESS_OPTIONS.map((o) => (
+                <Chip
+                  key={o.value} label={o.label}
+                  selected={waterHardness === o.value}
+                  onPress={() => { setWaterHardness(o.value); setErrors((e) => ({ ...e, waterHardnessEstimate: '' })); }}
+                />
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Existing Scale Condition" required error={errors.existingScaleVisualRating}>
+            <View style={styles.scaleRow}>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>0 Clean</AppText>
+              <View style={[styles.chipRow, { flex: 1 }]}>
+                {SCALE_RATINGS.map((n) => (
+                  <Chip
+                    key={n} label={n}
+                    selected={scaleRating === n}
+                    onPress={() => { setScaleRating(n); setErrors((e) => ({ ...e, existingScaleVisualRating: '' })); }}
+                  />
+                ))}
+              </View>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>7 Worst</AppText>
+            </View>
+          </Field>
+
+          <Field label="How does the water feel? (customer's words)" required error={errors.waterQualityFeel}>
+            <View style={[styles.inputBox, errors.waterQualityFeel ? styles.inputErr : null]}>
               <TextInput
                 style={[styles.input, styles.multilineInput]}
                 placeholder="e.g. water feels hard, lots of deposits on taps..."
                 placeholderTextColor={colors.textHint}
                 value={waterFeel}
-                onChangeText={setWaterFeel}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
+                onChangeText={(t) => { setWaterFeel(t); setErrors((e) => ({ ...e, waterQualityFeel: '' })); }}
+                multiline numberOfLines={3} textAlignVertical="top"
               />
             </View>
           </Field>
 
-          {/* ── Heater Specs ── */}
-          <SectionHeader title="Water Heater Specifications" icon="hardware-chip" />
+          {/* ── Water Heater ── */}
+          <SectionHeader title="Water Heater" icon="hardware-chip" />
 
-          <Field label="Heater Model" required error={errors.heaterModel}>
+          <Field label="Model" required error={errors.heaterModel}>
             <View style={[styles.inputBox, errors.heaterModel ? styles.inputErr : null]}>
               <TextInput
-                style={styles.input}
-                placeholder="e.g. Pebble Ivory 15L"
-                placeholderTextColor={colors.textHint}
-                value={heaterModel}
+                style={styles.input} placeholder="e.g. Pebble Ivory 15L"
+                placeholderTextColor={colors.textHint} value={heaterModel}
                 onChangeText={(t) => { setHeaterModel(t); setErrors((e) => ({ ...e, heaterModel: '' })); }}
               />
             </View>
           </Field>
 
-          <View style={styles.rowFields}>
-            <View style={styles.halfField}>
-              <Field label="Capacity (L)" required error={errors.heaterCapacity}>
-                <View style={[styles.inputBox, errors.heaterCapacity ? styles.inputErr : null]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 15"
-                    placeholderTextColor={colors.textHint}
-                    value={heaterCapacity}
-                    onChangeText={(t) => { setHeaterCapacity(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, heaterCapacity: '' })); }}
-                    keyboardType="number-pad"
-                  />
-                  <AppText variant="caption" color={colors.textHint}>L</AppText>
-                </View>
-              </Field>
+          <Field label="Capacity" required error={errors.heaterCapacity}>
+            <View style={styles.chipRow}>
+              {CAPACITY_OPTIONS.map((cap) => (
+                <Chip
+                  key={cap} label={cap}
+                  selected={heaterCapacity === cap}
+                  onPress={() => { setHeaterCapacity(cap); setErrors((e) => ({ ...e, heaterCapacity: '' })); }}
+                />
+              ))}
             </View>
-            <View style={styles.halfField}>
-              <Field label="Wattage (W)" required error={errors.heaterWattage}>
-                <View style={[styles.inputBox, errors.heaterWattage ? styles.inputErr : null]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 2000"
-                    placeholderTextColor={colors.textHint}
-                    value={heaterWattage}
-                    onChangeText={(t) => { setHeaterWattage(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, heaterWattage: '' })); }}
-                    keyboardType="number-pad"
-                  />
-                  <AppText variant="caption" color={colors.textHint}>W</AppText>
-                </View>
-              </Field>
-            </View>
-          </View>
+            {heaterCapacity === 'Other' && (
+              <View style={[styles.inputBox, { marginTop: spacing.sm }]}>
+                <TextInput
+                  style={styles.input} placeholder="Enter capacity (e.g. 35L)"
+                  placeholderTextColor={colors.textHint} value={capacityOther}
+                  onChangeText={setCapacityOther} autoFocus
+                />
+              </View>
+            )}
+          </Field>
 
-          {/* ── Usage ── */}
+          <Field label="Wattage" required error={errors.heaterWattage}>
+            <View style={styles.chipRow}>
+              {WATTAGE_OPTIONS.map((o) => (
+                <Chip
+                  key={o.value} label={o.label}
+                  selected={heaterWattage === o.value}
+                  onPress={() => { setHeaterWattage(o.value); setErrors((e) => ({ ...e, heaterWattage: '' })); }}
+                />
+              ))}
+            </View>
+          </Field>
+
+          <Field label="Age (years)" required error={errors.heaterAgeYears}>
+            <View style={[styles.inputBox, errors.heaterAgeYears ? styles.inputErr : null]}>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 3"
+                placeholderTextColor={colors.textHint}
+                value={heaterAge}
+                onChangeText={(t) => { setHeaterAge(t.replace(/\D/g, '').slice(0, 2)); setErrors((e) => ({ ...e, heaterAgeYears: '' })); }}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <AppText variant="caption2" color={colors.textHint}>yrs</AppText>
+            </View>
+          </Field>
+
+          <Field label="Thermostat Setting" required error={errors.hotWaterTemperatureSetting}>
+            <View style={styles.chipRow}>
+              {TEMP_OPTIONS.map((o) => (
+                <Chip key={o.value} label={o.label} selected={tempSetting === o.value} onPress={() => { setTempSetting(o.value); setErrors((e) => ({ ...e, hotWaterTemperatureSetting: '' })); }} />
+              ))}
+            </View>
+          </Field>
+
+          {/* ── Daily Usage ── */}
           <SectionHeader title="Daily Usage" icon="time" />
 
           <View style={styles.rowFields}>
             <View style={styles.halfField}>
-              <Field label="People using heater" required error={errors.peoplePerDay}>
+              <Field label="People / day" required error={errors.peoplePerDay}>
                 <View style={[styles.inputBox, errors.peoplePerDay ? styles.inputErr : null]}>
                   <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 4"
-                    placeholderTextColor={colors.textHint}
-                    value={peoplePerDay}
+                    style={styles.input} placeholder="e.g. 4"
+                    placeholderTextColor={colors.textHint} value={peoplePerDay}
                     onChangeText={(t) => { setPeoplePerDay(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, peoplePerDay: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>persons</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>ppl</AppText>
                 </View>
               </Field>
             </View>
             <View style={styles.halfField}>
-              <Field label="Total baths/day" required error={errors.bathsPerDay}>
+              <Field label="Avg baths / person / day" required error={errors.bathsPerDay}>
                 <View style={[styles.inputBox, errors.bathsPerDay ? styles.inputErr : null]}>
                   <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 5"
-                    placeholderTextColor={colors.textHint}
-                    value={bathsPerDay}
+                    style={styles.input} placeholder="e.g. 2"
+                    placeholderTextColor={colors.textHint} value={bathsPerDay}
                     onChangeText={(t) => { setBathsPerDay(t.replace(/\D/g, '')); setErrors((e) => ({ ...e, bathsPerDay: '' })); }}
                     keyboardType="number-pad"
                   />
-                  <AppText variant="caption" color={colors.textHint}>baths</AppText>
+                  <AppText variant="caption2" color={colors.textHint}>×</AppText>
                 </View>
               </Field>
             </View>
           </View>
 
-          {/* ── Comments ── */}
-          <SectionHeader title="Additional Comments" icon="chatbubble-ellipses" />
-          <View style={styles.inputBox}>
-            <TextInput
-              style={[styles.input, styles.multilineInput]}
-              placeholder="Any other observations or notes..."
-              placeholderTextColor={colors.textHint}
-              value={comments}
-              onChangeText={setComments}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
+          <Field label="Heater On Time" required error={errors.heaterUsagePattern}>
+            <View style={styles.chipRow}>
+              {USAGE_OPTIONS.map((o) => (
+                <Chip
+                  key={o.value} label={o.label}
+                  selected={usagePattern === o.value}
+                  onPress={() => { setUsagePattern(o.value); setErrors((e) => ({ ...e, heaterUsagePattern: '' })); }}
+                />
+              ))}
+            </View>
+          </Field>
 
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-            <AppText variant="label" color={colors.white}>Continue to Photos</AppText>
-            <Ionicons name="arrow-forward" size={18} color={colors.white} style={{ marginLeft: spacing.sm }} />
+            <AppText variant="label" color={colors.headerBg}>Continue to Photos</AppText>
+            <View style={styles.btnArrow}>
+              <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            </View>
           </TouchableOpacity>
 
         </ScrollView>
@@ -349,9 +453,9 @@ function SectionHeader({ title, icon }: { title: string; icon: string }) {
   return (
     <View style={sectionStyles.row}>
       <View style={sectionStyles.iconBox}>
-        <Ionicons name={icon as any} size={14} color={colors.primary} />
+        <Ionicons name={icon as any} size={14} color={colors.white} />
       </View>
-      <AppText variant="sectionTitle" color={colors.primary}>{title}</AppText>
+      <AppText variant="sectionTitle" color={colors.textPrimary}>{title}</AppText>
     </View>
   );
 }
@@ -370,42 +474,33 @@ function Field({ label, required, error, children }: {
   );
 }
 
-function AutoField({ icon, label, value, status, onRetry }: {
-  icon: string; label: string; value: string;
-  status?: 'idle' | 'fetching' | 'done' | 'error';
-  onRetry?: () => void;
-}) {
+function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
-    <View style={autoStyles.card}>
-      <View style={autoStyles.iconBox}>
-        {status === 'fetching'
-          ? <ActivityIndicator size="small" color={colors.primary} />
-          : <Ionicons name={icon as any} size={18} color={
-              status === 'done' ? colors.success :
-              status === 'error' ? colors.error : colors.primary
-            } />
-        }
-      </View>
-      <AppText variant="caption" color={colors.textSecondary}>{label}</AppText>
-      <AppText variant="label" numberOfLines={1}>{value}</AppText>
-      {status === 'error' && onRetry && (
-        <TouchableOpacity onPress={onRetry}>
-          <AppText variant="caption" color={colors.primary} style={{ textDecorationLine: 'underline' }}>
-            Retry
-          </AppText>
-        </TouchableOpacity>
-      )}
-    </View>
+    <TouchableOpacity
+      style={[chipStyles.chip, selected && chipStyles.selected]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <AppText
+        variant="caption"
+        color={selected ? colors.headerBg : colors.textSecondary}
+        style={selected ? chipStyles.selectedText : undefined}
+      >
+        {label}
+      </AppText>
+    </TouchableOpacity>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
   body: {
@@ -414,7 +509,15 @@ const styles = StyleSheet.create({
     padding: spacing.lg, paddingBottom: spacing.xxl,
     gap: spacing.sm,
   },
-  autoRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  autoPillRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  autoPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: colors.primaryFaint,
+    paddingHorizontal: spacing.sm, paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(196,122,0,0.25)',
+  },
+  autoPillError: { backgroundColor: colors.errorLight, borderColor: colors.error },
+  autoPillText: { fontWeight: '600' },
   inputBox: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: 1.5, borderColor: colors.border,
@@ -424,22 +527,23 @@ const styles = StyleSheet.create({
   inputErr: { borderColor: colors.error },
   prefix: { marginRight: spacing.xs },
   prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
-  input: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: spacing.sm },
+  input: { flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm },
   multilineInput: { minHeight: 72, paddingTop: spacing.sm },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm - 2,
-    borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
-  },
-  chipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
-  chipTextSelected: { fontWeight: '600' },
   rowFields: { flexDirection: 'row', gap: spacing.sm },
-  halfField: { flex: 1 },
+  halfField: { flex: 1, minWidth: 0 },
+  scaleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  scaleEndLabel: { fontWeight: '600', minWidth: 36, textAlign: 'center' },
   primaryBtn: {
     flexDirection: 'row', backgroundColor: colors.primary,
     borderRadius: 14, paddingVertical: spacing.md,
+    alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
+  },
+  btnArrow: {
+    marginLeft: spacing.md,
+    backgroundColor: colors.primaryDark,
+    width: 26, height: 26, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
-    marginTop: spacing.md,
   },
 });
 
@@ -450,27 +554,23 @@ const sectionStyles = StyleSheet.create({
   },
   iconBox: {
     width: 24, height: 24, borderRadius: 6,
-    backgroundColor: colors.primaryFaint,
+    backgroundColor: colors.headerBg,
     alignItems: 'center', justifyContent: 'center',
   },
 });
 
 const fieldStyles = StyleSheet.create({
-  wrapper: { marginBottom: spacing.sm },
+  wrapper: { marginBottom: spacing.xs },
   label: { marginBottom: spacing.xs },
   error: { marginTop: 4 },
 });
 
-const autoStyles = StyleSheet.create({
-  card: {
-    flex: 1, backgroundColor: colors.surface,
-    borderRadius: 14, padding: spacing.md,
-    alignItems: 'center', gap: spacing.xs,
-    borderWidth: 1, borderColor: colors.border,
+const chipStyles = StyleSheet.create({
+  chip: {
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm - 2,
+    borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
   },
-  iconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: colors.primaryFaint,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  selected: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+  selectedText: { fontWeight: '600' },
 });
+

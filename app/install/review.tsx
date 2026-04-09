@@ -14,20 +14,29 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
+import { submitInstallation } from '../../src/services/submission';
 
-const STEP_LABELS = ['Technician', 'Heater', 'Cartridge', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting,   setSubmitting]   = useState(false);
+  const [submitError,  setSubmitError]  = useState('');
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    // TODO Sprint 2: Replace with real SharePoint submission
-    await new Promise((r) => setTimeout(r, 1800));
-    console.log('Installation data to submit:', JSON.stringify(data, null, 2));
+    setSubmitError('');
+    const result = await submitInstallation(data);
     setSubmitting(false);
-    router.replace('/install/success');
+    if (result.success) {
+      router.replace('/install/success');
+    } else {
+      setSubmitError(result.error ?? 'Submission failed. Please try again.');
+    }
+  };
+
+  const goTo = (route: string) => {
+    if (!submitting) router.push(route as any);
   };
 
   return (
@@ -37,54 +46,71 @@ export default function ReviewScreen() {
           <Ionicons name="arrow-back" size={22} color={colors.white} />
         </TouchableOpacity>
         <AppText variant="h3" color={colors.white}>Review & Submit</AppText>
-        <View style={{ width: 38 }} />
+        <TouchableOpacity
+          style={styles.devChip}
+          onPress={() => router.push('/dev' as any)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <AppText variant="caption2" color="rgba(255,255,255,0.45)">DEV</AppText>
+        </TouchableOpacity>
       </View>
 
-      <StepIndicator currentStep={6} totalSteps={6} labels={STEP_LABELS} />
+      <StepIndicator currentStep={5} totalSteps={5} labels={STEP_LABELS} />
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
+        <AppText variant="caption" color={colors.textSecondary} style={styles.editHint}>
+          Tap any section to edit
+        </AppText>
+
         {/* Linked Units */}
-        <Section title="Linked Units" icon="link">
+        <Section title="Linked Units" icon="link" onEdit={() => goTo('/install/scan-heater')}>
           <Row label="Heater Serial No." value={data.heaterSerialNumber} />
           <Row label="Cartridge No." value={data.cartridgeNumber} />
+          <Row label="Sample Collected" value={data.waterSampleCollected ? 'Yes' : 'No'} />
         </Section>
 
         {/* Technician */}
-        <Section title="Service Person" icon="person-circle">
+        <Section title="Service Person" icon="person-circle" onEdit={() => goTo('/')}>
           <Row label="Name" value={data.technicianName} />
           <Row label="Mobile" value={`+91 ${data.technicianPhone}`} />
         </Section>
 
         {/* Customer */}
-        <Section title="Customer Details" icon="home">
+        <Section title="Customer Details" icon="home" onEdit={() => goTo('/install/customer-form')}>
+          <Row label="Name" value={data.customerName} />
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
           <Row label="Water Source" value={data.waterSource} />
+          {data.waterHardnessEstimate ? <Row label="TDS Range" value={`${data.waterHardnessEstimate} ppm`} /> : null}
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 7`} /> : null}
         </Section>
 
         {/* Heater Specs */}
-        <Section title="Heater Specifications" icon="hardware-chip">
+        <Section title="Water Heater" icon="hardware-chip" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Model" value={data.heaterModel} />
-          <Row label="Capacity" value={`${data.heaterCapacity} L`} />
-          <Row label="Wattage" value={`${data.heaterWattage} W`} />
+          <Row label="Capacity" value={data.heaterCapacity} />
+          <Row label="Wattage" value={data.heaterWattage ? `${parseInt(data.heaterWattage) / 1000} kW` : '—'} />
+          {data.heaterAgeYears ? <Row label="Age" value={data.heaterAgeYears} /> : null}
+          {data.hotWaterTemperatureSetting ? <Row label="Thermostat" value={data.hotWaterTemperatureSetting} /> : null}
         </Section>
 
         {/* Usage */}
-        <Section title="Daily Usage" icon="time">
+        <Section title="Daily Usage" icon="time" onEdit={() => goTo('/install/customer-form')}>
           <Row label="People/day" value={data.peoplePerDay} />
-          <Row label="Baths/day" value={data.bathsPerDay} />
-          {data.additionalComments ? <Row label="Comments" value={data.additionalComments} /> : null}
+          <Row label="Baths/person/day" value={data.bathsPerDay} />
+          {data.heaterUsagePattern ? <Row label="Heater On Time" value={data.heaterUsagePattern} /> : null}
         </Section>
 
         {/* Photos */}
-        <Section title="Photos" icon="camera">
+        <Section title="Photos" icon="camera" onEdit={() => goTo('/install/photos')}>
           <View style={styles.photosRow}>
-            <PhotoThumb label="Front View" uri={data.frontPhotoUri} />
-            <PhotoThumb label="Side View" uri={data.sidePhotoUri} />
+            <PhotoThumb label="Front" uri={data.frontPhotoUri} />
+            <PhotoThumb label="Side" uri={data.sidePhotoUri} />
+            <PhotoThumb label="Scale" uri={data.scalePhotoUri} />
           </View>
         </Section>
 
@@ -97,23 +123,32 @@ export default function ReviewScreen() {
         >
           {submitting ? (
             <>
-              <ActivityIndicator color={colors.white} size="small" />
-              <AppText variant="label" color={colors.white} style={{ marginLeft: spacing.sm }}>
+              <ActivityIndicator color={colors.headerBg} size="small" />
+              <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
                 Submitting...
               </AppText>
             </>
           ) : (
             <>
-              <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
-              <AppText variant="label" color={colors.white} style={{ marginLeft: spacing.sm }}>
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.headerBg} />
+              <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
                 Submit Installation Record
               </AppText>
             </>
           )}
         </TouchableOpacity>
 
-        <AppText variant="caption" color={colors.textHint} style={styles.disclaimer}>
-          By submitting, you confirm that all details are accurate and the anti-scalant unit has been properly installed.
+        {submitError ? (
+          <View style={styles.errorBanner}>
+            <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
+            <AppText variant="caption" color={colors.error} style={{ flex: 1 }}>
+              {submitError}
+            </AppText>
+          </View>
+        ) : null}
+
+        <AppText variant="caption" color={colors.textSecondary} style={styles.disclaimer}>
+          By submitting, you confirm all details are accurate and the unit has been properly installed.
         </AppText>
 
       </ScrollView>
@@ -121,16 +156,25 @@ export default function ReviewScreen() {
   );
 }
 
-function Section({ title, icon, children }: {
-  title: string; icon: string; children: React.ReactNode;
+// ─── Section ─────────────────────────────────────────────────────────────────
+
+function Section({ title, icon, onEdit, children }: {
+  title: string; icon: string; onEdit: () => void; children: React.ReactNode;
 }) {
   return (
     <View style={secStyles.wrapper}>
-      <View style={secStyles.titleRow}>
-        <Ionicons name={icon as any} size={14} color={colors.primary} />
-        <AppText variant="sectionTitle" color={colors.primary}>{title}</AppText>
-      </View>
-      <View style={secStyles.card}>{children}</View>
+      <TouchableOpacity style={secStyles.titleRow} onPress={onEdit} activeOpacity={0.7}>
+        <View style={secStyles.iconBox}>
+          <Ionicons name={icon as any} size={12} color={colors.white} />
+        </View>
+        <AppText variant="sectionTitle" color={colors.textSecondary} style={{ flex: 1 }}>
+          {title}
+        </AppText>
+        <Ionicons name="pencil-outline" size={13} color={colors.primary} />
+      </TouchableOpacity>
+      <TouchableOpacity style={secStyles.card} onPress={onEdit} activeOpacity={0.85}>
+        {children}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -160,19 +204,26 @@ function PhotoThumb({ label, uri }: { label: string; uri: string | null }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.primaryDark },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.headerBg,
   },
   backBtn: { padding: spacing.xs },
+  devChip: {
+    paddingHorizontal: spacing.sm, paddingVertical: 4,
+    borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+  },
   body: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm,
   },
+  editHint: { textAlign: 'center', marginBottom: spacing.xs },
   photosRow: { flexDirection: 'row', gap: spacing.md },
   submitBtn: {
     flexDirection: 'row', backgroundColor: colors.success,
@@ -180,6 +231,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
   },
   submitBtnDisabled: { opacity: 0.6 },
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs,
+    backgroundColor: colors.errorLight,
+    borderRadius: 10, padding: spacing.sm,
+    borderWidth: 1, borderColor: colors.error,
+  },
   disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
 });
 
@@ -188,6 +245,11 @@ const secStyles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
     marginTop: spacing.sm,
+  },
+  iconBox: {
+    width: 20, height: 20, borderRadius: 5,
+    backgroundColor: colors.headerBg,
+    alignItems: 'center', justifyContent: 'center',
   },
   card: {
     backgroundColor: colors.surface,

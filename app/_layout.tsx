@@ -22,7 +22,6 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="install/scan-heater" />
-        <Stack.Screen name="install/scan-cartridge" />
         <Stack.Screen name="install/customer-form" />
         <Stack.Screen name="install/photos" />
         <Stack.Screen name="install/review" />
