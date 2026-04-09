@@ -2,7 +2,7 @@
   "_readme": "V-Guard Hard Water Protection Trial — Microsoft 365 endpoints. Edit this file and commit to update the app. All REPLACE_WITH_* values must be filled before going live.",
 
   "powerAutomate": {
-    "installationWebhookUrl": "REPLACE_WITH_YOUR_POWER_AUTOMATE_HTTP_TRIGGER_URL",
+    "installationWebhookUrl": "https://defaultd58e596dd48d46c087fca9d22fc9eb.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/dec96d093d0244f48f0a6b79cdc15e72/triggers/manual/paths/invoke?api-version=1",
     "_hint": "Power Automate → New flow → Instant cloud flow → 'When an HTTP request is received'. Save the flow and paste the generated HTTP POST URL above."
   },
 
