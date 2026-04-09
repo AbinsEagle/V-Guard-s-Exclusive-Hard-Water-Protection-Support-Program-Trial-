@@ -28,6 +28,7 @@ export default function UnitRegistrationScreen() {
 
   const [heaterSerial, setHeaterSerial]       = useState(data.heaterSerialNumber || '');
   const [cartridgeNum, setCartridgeNum]        = useState(data.cartridgeNumber || '');
+  const [batchCode, setBatchCode]              = useState(data.cartridgeBatchCode || '');
   const [sampleCollected, setSampleCollected]  = useState(data.waterSampleCollected || false);
   const [scanTarget, setScanTarget]            = useState<ScanTarget>(null);
   const [heaterScanned, setHeaterScanned]      = useState(false); // feedback badge
@@ -62,6 +63,7 @@ export default function UnitRegistrationScreen() {
     update({
       heaterSerialNumber:   heaterSerial.trim(),
       cartridgeNumber:      cartridgeNum.trim(),
+      cartridgeBatchCode:   batchCode.trim(),
       waterSampleCollected: sampleCollected,
     });
     router.push('/install/customer-form');
@@ -239,6 +241,25 @@ export default function UnitRegistrationScreen() {
               ? <AppText variant="caption" color={colors.error} style={fieldStyles.error}>{errors.cartridge}</AppText>
               : null
             }
+          </View>
+
+          <View style={fieldStyles.wrapper}>
+            <AppText variant="label" style={fieldStyles.label}>
+              Batch Code <AppText variant="caption" color={colors.textSecondary}>(optional)</AppText>
+            </AppText>
+            <View style={styles.inputBox}>
+              <Ionicons name="pricetag-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. B2024-07"
+                placeholderTextColor={colors.textHint}
+                value={batchCode}
+                onChangeText={(t) => setBatchCode(t.toUpperCase())}
+                autoCapitalize="characters"
+                returnKeyType="done"
+                onSubmitEditing={handleContinue}
+              />
+            </View>
           </View>
 
           {/* ── Link preview card ── */}
