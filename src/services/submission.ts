@@ -52,7 +52,8 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     bathsPerDay,
     heaterAgeYears,
     waterSampleCollected,
-    cartridgeBatchCode,   // not an Excel column — excluded from payload
+    cartridgeBatchCode,            // not an Excel column — excluded from payload
+    existingScaleVisualRating,
     ...rest
   } = data;
 
@@ -61,10 +62,11 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
   const photoFolder = `${safeName}_${data.pincode}`;
 
   // Normalise types for Excel / Power BI:
-  //  • gpsLat / gpsLng       → float   (Power BI map visual requires numbers)
-  //  • peoplePerDay / bathsPerDay → integer
-  //  • heaterAgeYears        → integer (e.g. 3, not "1-3 years")
-  //  • waterSampleCollected  → "Yes"/"No" string (readable in Excel)
+  //  • gpsLat / gpsLng              → float   (Power BI map visual requires numbers)
+  //  • peoplePerDay / bathsPerDay   → integer
+  //  • heaterAgeYears               → integer (e.g. 3, not "1-3 years")
+  //  • existingScaleVisualRating    → integer 0–7 (0 = clean, 7 = worst)
+  //  • waterSampleCollected         → "Yes"/"No" string (readable in Excel)
   const installation = {
     ...rest,
     waterSampleCollected: waterSampleCollected ? 'Yes' : 'No',
@@ -73,6 +75,7 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     peoplePerDay:  peoplePerDay  ? parseInt(peoplePerDay, 10)   : null,
     bathsPerDay:   bathsPerDay   ? parseInt(bathsPerDay,  10)   : null,
     heaterAgeYears: heaterAgeYears ? parseInt(heaterAgeYears, 10) || null : null,
+    existingScaleVisualRating: existingScaleVisualRating !== '' ? parseInt(existingScaleVisualRating, 10) : null,
   };
 
   return {

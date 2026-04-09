@@ -6,7 +6,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -65,12 +64,7 @@ const USAGE_OPTIONS: { label: string; value: UsagePattern }[] = [
   { label: 'Seasonal',         value: 'Seasonal (winter only)' },
 ];
 
-const SCALE_OPTIONS: { label: string; value: ScaleRating; icon: string; desc: string }[] = [
-  { label: 'None',     value: 'None',     icon: 'checkmark-circle-outline', desc: 'No visible scale or deposits' },
-  { label: 'Mild',     value: 'Mild',     icon: 'remove-circle-outline',    desc: 'Slight white residue on fittings' },
-  { label: 'Moderate', value: 'Moderate', icon: 'alert-circle-outline',     desc: 'Visible crusty buildup on tap/heater' },
-  { label: 'Severe',   value: 'Severe',   icon: 'close-circle-outline',     desc: 'Heavy deposits, reduced flow' },
-];
+const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5', '6', '7'];
 
 interface Errors {
   customerName: string; customerWhatsApp: string; pincode: string;
@@ -100,7 +94,6 @@ export default function CustomerFormScreen() {
   const [bathsPerDay,     setBathsPerDay]     = useState(data.bathsPerDay);
   const [usagePattern,    setUsagePattern]    = useState<UsagePattern | ''>(data.heaterUsagePattern);
   const [scaleRating,     setScaleRating]     = useState<ScaleRating | ''>(data.existingScaleVisualRating);
-  const [scaleModalOpen,  setScaleModalOpen]  = useState(false);
 
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
   const [gpsLabel,  setGpsLabel]  = useState('');
@@ -193,44 +186,6 @@ export default function CustomerFormScreen() {
       </View>
 
       <StepIndicator currentStep={3} totalSteps={5} labels={STEP_LABELS} />
-
-      {/* ── Scale condition modal ─────────────────────────────────────────── */}
-      <Modal visible={scaleModalOpen} transparent animationType="slide" onRequestClose={() => setScaleModalOpen(false)}>
-        <TouchableOpacity style={modalStyles.scrim} activeOpacity={1} onPress={() => setScaleModalOpen(false)} />
-        <View style={modalStyles.sheet}>
-          <View style={modalStyles.handle} />
-          <AppText variant="label" style={modalStyles.sheetTitle}>Existing Scale Condition</AppText>
-          <AppText variant="caption" color={colors.textSecondary} style={modalStyles.sheetSub}>
-            Observe tap aerators or showerhead
-          </AppText>
-          {SCALE_OPTIONS.map((o) => (
-            <TouchableOpacity
-              key={o.value}
-              style={[modalStyles.optionRow, scaleRating === o.value && modalStyles.optionSelected]}
-              onPress={() => { setScaleRating(o.value); setScaleModalOpen(false); }}
-              activeOpacity={0.75}
-            >
-              <Ionicons
-                name={o.icon as any}
-                size={22}
-                color={scaleRating === o.value ? colors.primary : colors.textSecondary}
-              />
-              <View style={{ flex: 1 }}>
-                <AppText variant="label" color={scaleRating === o.value ? colors.textPrimary : colors.textSecondary}>
-                  {o.label}
-                </AppText>
-                <AppText variant="caption" color={colors.textSecondary}>{o.desc}</AppText>
-              </View>
-              {scaleRating === o.value && (
-                <Ionicons name="checkmark" size={18} color={colors.primary} />
-              )}
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity style={modalStyles.skipBtn} onPress={() => setScaleModalOpen(false)}>
-            <AppText variant="caption" color={colors.textSecondary}>Skip</AppText>
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -333,6 +288,22 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
+          <Field label="Existing Scale Condition">
+            <View style={styles.scaleRow}>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>0 Clean</AppText>
+              <View style={[styles.chipRow, { flex: 1 }]}>
+                {SCALE_RATINGS.map((n) => (
+                  <Chip
+                    key={n} label={n}
+                    selected={scaleRating === n}
+                    onPress={() => setScaleRating(n)}
+                  />
+                ))}
+              </View>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>7 Worst</AppText>
+            </View>
+          </Field>
+
           <Field label="How does the water feel? (customer's words)" required error={errors.waterQualityFeel}>
             <View style={[styles.inputBox, errors.waterQualityFeel ? styles.inputErr : null]}>
               <TextInput
@@ -414,28 +385,6 @@ export default function CustomerFormScreen() {
               ))}
             </View>
           </Field>
-
-          {/* ── Scale condition trigger ── */}
-          <TouchableOpacity
-            style={[styles.scaleTrigger, scaleRating && styles.scaleTriggerFilled]}
-            onPress={() => setScaleModalOpen(true)}
-            activeOpacity={0.75}
-          >
-            <Ionicons
-              name="layers-outline" size={18}
-              color={scaleRating ? colors.primary : colors.textSecondary}
-            />
-            <AppText
-              variant="label"
-              color={scaleRating ? colors.textPrimary : colors.textSecondary}
-              style={{ flex: 1 }}
-            >
-              {scaleRating ? `Scale Condition: ${scaleRating}` : 'Scale Condition'}
-            </AppText>
-            <AppText variant="caption" color={colors.textSecondary}>
-              {scaleRating ? '▾ change' : 'tap to set'}
-            </AppText>
-          </TouchableOpacity>
 
           {/* ── Daily Usage ── */}
           <SectionHeader title="Daily Usage" icon="time" />
@@ -580,14 +529,8 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   rowFields: { flexDirection: 'row', gap: spacing.sm },
   halfField: { flex: 1, minWidth: 0 },
-  scaleTrigger: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-    marginTop: spacing.xs,
-  },
-  scaleTriggerFilled: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+  scaleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  scaleEndLabel: { fontWeight: '600', minWidth: 36, textAlign: 'center' },
   primaryBtn: {
     flexDirection: 'row', backgroundColor: colors.primary,
     borderRadius: 14, paddingVertical: spacing.md,
@@ -628,29 +571,3 @@ const chipStyles = StyleSheet.create({
   selectedText: { fontWeight: '600' },
 });
 
-const modalStyles = StyleSheet.create({
-  scrim: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl,
-    gap: spacing.sm,
-  },
-  handle: {
-    alignSelf: 'center', width: 36, height: 4,
-    borderRadius: 2, backgroundColor: colors.borderOpaque,
-    marginBottom: spacing.sm,
-  },
-  sheetTitle: { textAlign: 'center' },
-  sheetSub: { textAlign: 'center', marginBottom: spacing.xs },
-  optionRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.sm,
-    borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
-  skipBtn: { alignSelf: 'center', paddingVertical: spacing.sm },
-});

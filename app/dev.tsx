@@ -58,7 +58,7 @@ const USAGE_OPTS: { label: string; value: UsagePattern }[] = [
   { label: 'All day',    value: 'All day' },
   { label: 'Seasonal',   value: 'Seasonal (winter only)' },
 ];
-const SCALE_OPTS: ScaleRating[] = ['None', 'Mild', 'Moderate', 'Severe'];
+const SCALE_OPTS = ['0', '1', '2', '3', '4', '5', '6', '7'];
 
 export default function DevScreen() {
   const { data, update } = useInstallation();
@@ -412,7 +412,7 @@ export default function DevScreen() {
             />
           </EditSection>
 
-          <EditSection title="Scale Condition">
+          <EditSection title="Scale Condition (0 = Clean, 7 = Worst)">
             <ChipRow
               options={SCALE_OPTS.map((v) => ({ label: v, value: v }))}
               value={data.existingScaleVisualRating}

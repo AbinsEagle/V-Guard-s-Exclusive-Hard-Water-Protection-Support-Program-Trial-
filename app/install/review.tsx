@@ -86,6 +86,7 @@ export default function ReviewScreen() {
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 7`} /> : null}
         </Section>
 
         {/* Heater Specs */}
@@ -95,7 +96,6 @@ export default function ReviewScreen() {
           <Row label="Wattage" value={data.heaterWattage ? `${parseInt(data.heaterWattage) / 1000} kW` : '—'} />
           {data.heaterAgeYears ? <Row label="Age" value={data.heaterAgeYears} /> : null}
           {data.hotWaterTemperatureSetting ? <Row label="Thermostat" value={data.hotWaterTemperatureSetting} /> : null}
-          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={data.existingScaleVisualRating} /> : null}
         </Section>
 
         {/* Usage */}
