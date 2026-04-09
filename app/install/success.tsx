@@ -1,6 +1,7 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { useInstallation } from '../../src/store/installationStore';
@@ -9,8 +10,28 @@ import { colors, spacing, radius, shadows } from '../../src/theme';
 export default function SuccessScreen() {
   const { data, reset } = useInstallation();
 
-  const handleNewInstallation = () => {
+  // Snapshot before reset so the card still has data to display
+  const snap = useRef({
+    customerName:    data.customerName,
+    customerWhatsApp: data.customerWhatsApp,
+    heaterModel:     data.heaterModel || data.heaterSerialNumber,
+    cartridgeNumber: data.cartridgeNumber,
+    installationDate: data.installationDate,
+  }).current;
+
+  useEffect(() => {
+    // Clear the store immediately — any back-navigation leads to a blank form
     reset();
+
+    // Android hardware-back → go to root instead of back through the flow
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.replace('/');
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
+
+  const handleNewInstallation = () => {
     router.replace('/');
   };
 
@@ -35,18 +56,20 @@ export default function SuccessScreen() {
 
         {/* ── Summary card ── */}
         <View style={styles.summaryCard}>
-          <SummaryRow icon="flame-outline"   label="Heater"    value={data.heaterSerialNumber} />
+          <SummaryRow icon="person-outline"  label="Customer"  value={snap.customerName} />
           <View style={styles.divider} />
-          <SummaryRow icon="cube-outline"    label="Cartridge" value={data.cartridgeNumber} />
+          <SummaryRow icon="logo-whatsapp"   label="WhatsApp"  value={`+91 ${snap.customerWhatsApp}`} />
           <View style={styles.divider} />
-          <SummaryRow icon="logo-whatsapp"   label="Customer"  value={`+91 ${data.customerWhatsApp}`} />
+          <SummaryRow icon="flame-outline"   label="Heater"    value={snap.heaterModel} />
+          <View style={styles.divider} />
+          <SummaryRow icon="cube-outline"    label="Cartridge" value={snap.cartridgeNumber} />
           <View style={styles.divider} />
           <SummaryRow
             icon="calendar-outline"
-            label="Date"
-            value={new Date(data.installationDate).toLocaleDateString('en-IN', {
+            label="Installed"
+            value={snap.installationDate ? new Date(snap.installationDate).toLocaleDateString('en-IN', {
               day: 'numeric', month: 'short', year: 'numeric',
-            })}
+            }) : '—'}
           />
         </View>
 
