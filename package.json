@@ -12,9 +12,11 @@
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
     "@expo/vector-icons": "^14.0.4",
+    "@react-native-async-storage/async-storage": "^3.0.2",
     "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.46",
     "expo-camera": "~15.0.16",
+    "expo-clipboard": "^55.0.12",
     "expo-file-system": "^55.0.14",
     "expo-font": "~13.0.4",
     "expo-location": "~17.0.1",
