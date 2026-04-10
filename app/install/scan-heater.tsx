@@ -29,7 +29,7 @@ export default function UnitRegistrationScreen() {
   const [sampleCollected, setSampleCollected] = useState(data.waterSampleCollected || false);
   const [scanTarget, setScanTarget]           = useState<ScanTarget>(null);
   const [heaterScanned, setHeaterScanned]     = useState(false);
-  const [errors, setErrors]                   = useState({ heater: '', cartridge: '' });
+  const [errors, setErrors]                   = useState({ heater: '', cartridge: '', sample: '' });
 
   const openScanner = async () => {
     if (!permission?.granted) {
@@ -49,11 +49,12 @@ export default function UnitRegistrationScreen() {
   };
 
   const handleContinue = () => {
-    const e = { heater: '', cartridge: '' };
+    const e = { heater: '', cartridge: '', sample: '' };
     if (!heaterSerial.trim())  e.heater    = 'Heater serial number is required';
     if (!cartridgeNum.trim())  e.cartridge = 'Cartridge number is required';
+    if (!sampleCollected)      e.sample    = 'Water sample must be collected before proceeding';
     setErrors(e);
-    if (e.heater || e.cartridge) return;
+    if (e.heater || e.cartridge || e.sample) return;
 
     update({
       heaterSerialNumber:   heaterSerial.trim(),
@@ -215,8 +216,8 @@ export default function UnitRegistrationScreen() {
 
           {/* ── Water sample checkbox ── */}
           <TouchableOpacity
-            style={[styles.checkRow, sampleCollected && styles.checkRowChecked]}
-            onPress={() => setSampleCollected((v) => !v)}
+            style={[styles.checkRow, sampleCollected && styles.checkRowChecked, errors.sample && styles.checkRowError]}
+            onPress={() => { setSampleCollected((v) => !v); setErrors((e) => ({ ...e, sample: '' })); }}
             activeOpacity={0.8}
           >
             <View style={[styles.checkbox, sampleCollected && styles.checkboxChecked]}>
@@ -234,6 +235,12 @@ export default function UnitRegistrationScreen() {
               {sampleCollected ? 'Yes' : 'No'}
             </AppText>
           </TouchableOpacity>
+          {errors.sample ? (
+            <View style={styles.sampleError}>
+              <Ionicons name="alert-circle" size={13} color={colors.error} />
+              <AppText variant="caption" color={colors.error}>{errors.sample}</AppText>
+            </View>
+          ) : null}
 
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
@@ -297,7 +304,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
   },
   checkRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+  checkRowError: { borderColor: colors.error, backgroundColor: colors.errorLight },
   sampleHint: { lineHeight: 16, marginTop: 2 },
+  sampleError: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: -4 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,
     borderWidth: 1.5, borderColor: colors.border,
