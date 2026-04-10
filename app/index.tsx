@@ -149,7 +149,21 @@ export default function EntryScreen() {
             {errors.phone ? <FieldError msg={errors.phone} /> : null}
           </View>
 
+          {/* CTA — right after the form */}
+          <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.75}>
+            <AppText variant="label" color={colors.headerBg}>Start Installation</AppText>
+            <View style={styles.startBtnArrow}>
+              <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+
           {/* FAQ accordion */}
+          <View style={styles.faqHeadingRow}>
+            <Ionicons name="bulb-outline" size={15} color={colors.primaryDark} />
+            <AppText variant="label" color={colors.primaryDark} style={styles.faqHeading}>
+              Do You Know?!
+            </AppText>
+          </View>
           <View style={faqStyles.container}>
             {FAQ.map((item, i) => (
               <View key={i} style={faqStyles.item}>
@@ -186,19 +200,10 @@ export default function EntryScreen() {
 
           </View>{/* end topBlock */}
 
-          {/* CTA + footer */}
-          <View style={styles.bottomBlock}>
-          <TouchableOpacity style={styles.startBtn} onPress={handleStart} activeOpacity={0.75}>
-            <AppText variant="label" color={colors.headerBg}>Start Installation</AppText>
-            <View style={styles.startBtnArrow}>
-              <Ionicons name="arrow-forward" size={16} color={colors.white} />
-            </View>
-          </TouchableOpacity>
-
+          {/* Footer */}
           <AppText variant="caption2" color={colors.textTertiary} style={styles.footer}>
             For internal use only · V-Guard R&D
           </AppText>
-          </View>
 
         </View>
       </ScrollView>
@@ -331,6 +336,10 @@ const styles = StyleSheet.create({
   },
 
   footer: { textAlign: 'center' },
+  faqHeadingRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+  },
+  faqHeading: { letterSpacing: 0.5 },
 });
 
 const faqStyles = StyleSheet.create({
