@@ -6,9 +6,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
@@ -30,18 +31,25 @@ export default function UnitRegistrationScreen() {
   const [scanTarget, setScanTarget]           = useState<ScanTarget>(null);
   const [heaterScanned, setHeaterScanned]     = useState(false);
   const [errors, setErrors]                   = useState({ heater: '', cartridge: '', sample: '' });
+  const [cameraKey, setCameraKey]             = useState(0);   // incremented to force remount
+  const [cameraReady, setCameraReady]         = useState(false);
+  const scanLock = useRef(false); // prevents double-fire on rapid scan detection
 
   const openScanner = async () => {
     if (!permission?.granted) {
       const res = await requestPermission();
       if (!res.granted) return;
     }
+    scanLock.current = false;
+    setCameraReady(false);
+    setCameraKey((k) => k + 1); // force a fresh CameraView mount every time
     setHeaterScanned(false);
     setScanTarget('heater');
   };
 
   const handleBarcodeScan = ({ data: code }: { data: string }) => {
-    if (scanTarget !== 'heater') return;
+    if (scanLock.current) return; // ignore subsequent fires until camera closes
+    scanLock.current = true;
     setHeaterSerial(code.toUpperCase());
     setErrors((e) => ({ ...e, heater: '' }));
     setHeaterScanned(true);
@@ -68,14 +76,16 @@ export default function UnitRegistrationScreen() {
   if (scanTarget && permission?.granted) {
     return (
       <View style={styles.cameraScreen}>
+        {/* key forces a complete remount — fixes blank camera on Android */}
         <CameraView
+          key={cameraKey}
           style={styles.camera}
           facing="back"
-          type={"back" as any}
-          barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39'] }}
-          onBarcodeScanned={handleBarcodeScan}
-          barCodeScannerSettings={{ barCodeTypes: ['qr'] } as any}
-          onBarCodeScanned={handleBarcodeScan as any}
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr', 'code128', 'code39', 'code93', 'ean13', 'ean8', 'pdf417', 'datamatrix'],
+          }}
+          onBarcodeScanned={cameraReady ? handleBarcodeScan : undefined}
+          onCameraReady={() => setCameraReady(true)}
         >
           <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
             <View style={styles.cameraHeader}>
@@ -85,22 +95,33 @@ export default function UnitRegistrationScreen() {
               <View style={styles.camBadge}>
                 <Ionicons name="qr-code-outline" size={14} color={colors.white} />
                 <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-                  Scan Heater QR
+                  Scan Heater QR / Barcode
                 </AppText>
               </View>
               <View style={{ width: 40 }} />
             </View>
 
             <View style={styles.finderWrapper}>
-              <View style={styles.scanFrame}>
-                <View style={[styles.corner, styles.cTL]} />
-                <View style={[styles.corner, styles.cTR]} />
-                <View style={[styles.corner, styles.cBL]} />
-                <View style={[styles.corner, styles.cBR]} />
-              </View>
-              <AppText variant="caption" color={colors.white} style={styles.scanHint}>
-                Align QR / barcode on the heater label within the frame
-              </AppText>
+              {!cameraReady ? (
+                <View style={styles.cameraInitBox}>
+                  <ActivityIndicator color={colors.primary} size="large" />
+                  <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
+                    Starting camera…
+                  </AppText>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.scanFrame}>
+                    <View style={[styles.corner, styles.cTL]} />
+                    <View style={[styles.corner, styles.cTR]} />
+                    <View style={[styles.corner, styles.cBL]} />
+                    <View style={[styles.corner, styles.cBR]} />
+                  </View>
+                  <AppText variant="caption" color={colors.white} style={styles.scanHint}>
+                    Hold steady — align QR or barcode inside the frame
+                  </AppText>
+                </>
+              )}
             </View>
 
             <View style={styles.camFooter}>
@@ -342,6 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   finderWrapper: { alignItems: 'center', gap: spacing.lg },
+  cameraInitBox: { alignItems: 'center', justifyContent: 'center', height: 230 },
   scanFrame: { width: 230, height: 230, position: 'relative' },
   corner: { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
   cTL: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
