@@ -7,9 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-} from 'react-native';import { SafeAreaView } from 'react-native-safe-area-context';
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
@@ -19,42 +20,278 @@ import { colors, spacing, radius, shadows } from '../../src/theme';
 
 export const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
-type ScanTarget = 'heater' | null;
+// ─── Web barcode scanner ──────────────────────────────────────────────────────
+// expo-camera's onBarcodeScanned is native-only; on web we use
+// getUserMedia (with facingMode:'environment') + BarcodeDetector API.
+
+function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClose: () => void }) {
+  const videoRef  = useRef<any>(null);
+  const streamRef = useRef<any>(null);
+  const timerRef  = useRef<any>(null);
+  const lockRef   = useRef(false);
+  const [status, setStatus] = useState<'starting' | 'ready' | 'error' | 'unsupported'>('starting');
+  const [errMsg,  setErrMsg]  = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      // 1 — get camera stream, prefer back camera
+      let stream: any;
+      try {
+        stream = await (navigator as any).mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+      } catch (e: any) {
+        if (!cancelled) { setStatus('error'); setErrMsg('Camera access denied — tap "Enter manually".'); }
+        return;
+      }
+      if (cancelled) { stream.getTracks().forEach((t: any) => t.stop()); return; }
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+
+      // 2 — check BarcodeDetector support (Chrome 83+ on Android)
+      if (!('BarcodeDetector' in window)) {
+        setStatus('unsupported');
+        return;
+      }
+
+      const detector = new (window as any).BarcodeDetector({
+        formats: ['qr_code', 'code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'pdf417', 'data_matrix'],
+      });
+
+      setStatus('ready');
+
+      // 3 — poll for barcodes every 250 ms
+      timerRef.current = setInterval(async () => {
+        if (lockRef.current || !videoRef.current) return;
+        try {
+          const results = await detector.detect(videoRef.current);
+          if (results.length > 0 && !lockRef.current) {
+            lockRef.current = true;
+            onScan(results[0].rawValue);
+          }
+        } catch { /* frame not ready yet */ }
+      }, 250);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (timerRef.current) clearInterval(timerRef.current);
+      streamRef.current?.getTracks().forEach((t: any) => t.stop());
+    };
+  }, []);
+
+  return (
+    <View style={styles.cameraScreen}>
+      {/* HTML video element — valid in React Native Web / Expo Web */}
+      {/* @ts-ignore */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{
+          position: 'absolute', top: 0, left: 0,
+          width: '100%', height: '100%', objectFit: 'cover',
+        } as any}
+      />
+
+      <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
+        {/* Header */}
+        <View style={styles.cameraHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.camClose}>
+            <Ionicons name="close" size={26} color={colors.white} />
+          </TouchableOpacity>
+          <View style={styles.camBadge}>
+            <Ionicons name="qr-code-outline" size={14} color={colors.white} />
+            <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
+              Scan Heater QR / Barcode
+            </AppText>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* Finder */}
+        <View style={styles.finderWrapper}>
+          {status === 'starting' && (
+            <View style={styles.cameraInitBox}>
+              <ActivityIndicator color={colors.primary} size="large" />
+              <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
+                Starting camera…
+              </AppText>
+            </View>
+          )}
+
+          {status === 'error' && (
+            <View style={styles.cameraInitBox}>
+              <Ionicons name="camera-outline" size={40} color={colors.error} />
+              <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center' }}>
+                {errMsg}
+              </AppText>
+            </View>
+          )}
+
+          {status === 'unsupported' && (
+            <View style={styles.cameraInitBox}>
+              <Ionicons name="information-circle-outline" size={40} color={colors.primary} />
+              <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center', paddingHorizontal: 24 }}>
+                QR scanning is not supported in this browser.{'\n'}
+                Use Chrome on Android, or type the code manually.
+              </AppText>
+            </View>
+          )}
+
+          {status === 'ready' && (
+            <>
+              <View style={styles.scanFrame}>
+                <View style={[styles.corner, styles.cTL]} />
+                <View style={[styles.corner, styles.cTR]} />
+                <View style={[styles.corner, styles.cBL]} />
+                <View style={[styles.corner, styles.cBR]} />
+              </View>
+              <AppText variant="caption" color={colors.white} style={styles.scanHint}>
+                Hold steady — align QR or barcode inside the frame
+              </AppText>
+            </>
+          )}
+        </View>
+
+        {/* Footer */}
+        <View style={styles.camFooter}>
+          <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
+            <Ionicons name="keypad-outline" size={16} color={colors.primary} />
+            <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>
+              Enter manually instead
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+// ─── Native barcode scanner ───────────────────────────────────────────────────
+
+function NativeScanner({
+  cameraKey, cameraReady, onReady, onScan, onClose,
+}: {
+  cameraKey: number;
+  cameraReady: boolean;
+  onReady: () => void;
+  onScan: (e: { data: string }) => void;
+  onClose: () => void;
+}) {
+  return (
+    <View style={styles.cameraScreen}>
+      <CameraView
+        key={cameraKey}
+        style={styles.camera}
+        facing="back"
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr', 'code128', 'code39', 'code93', 'ean13', 'ean8', 'pdf417', 'datamatrix'],
+        }}
+        onBarcodeScanned={cameraReady ? onScan : undefined}
+        onCameraReady={onReady}
+      >
+        <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
+          <View style={styles.cameraHeader}>
+            <TouchableOpacity onPress={onClose} style={styles.camClose}>
+              <Ionicons name="close" size={26} color={colors.white} />
+            </TouchableOpacity>
+            <View style={styles.camBadge}>
+              <Ionicons name="qr-code-outline" size={14} color={colors.white} />
+              <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
+                Scan Heater QR / Barcode
+              </AppText>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+
+          <View style={styles.finderWrapper}>
+            {!cameraReady ? (
+              <View style={styles.cameraInitBox}>
+                <ActivityIndicator color={colors.primary} size="large" />
+                <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
+                  Starting camera…
+                </AppText>
+              </View>
+            ) : (
+              <>
+                <View style={styles.scanFrame}>
+                  <View style={[styles.corner, styles.cTL]} />
+                  <View style={[styles.corner, styles.cTR]} />
+                  <View style={[styles.corner, styles.cBL]} />
+                  <View style={[styles.corner, styles.cBR]} />
+                </View>
+                <AppText variant="caption" color={colors.white} style={styles.scanHint}>
+                  Hold steady — align QR or barcode inside the frame
+                </AppText>
+              </>
+            )}
+          </View>
+
+          <View style={styles.camFooter}>
+            <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
+              <Ionicons name="keypad-outline" size={16} color={colors.primary} />
+              <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>
+                Enter manually instead
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </CameraView>
+    </View>
+  );
+}
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function UnitRegistrationScreen() {
   const { data, update } = useInstallation();
   const [permission, requestPermission] = useCameraPermissions();
 
-  const [heaterSerial, setHeaterSerial]      = useState(data.heaterSerialNumber || '');
-  const [cartridgeNum, setCartridgeNum]       = useState(data.cartridgeNumber || '');
+  const [heaterSerial,    setHeaterSerial]    = useState(data.heaterSerialNumber || '');
+  const [cartridgeNum,    setCartridgeNum]     = useState(data.cartridgeNumber || '');
   const [sampleCollected, setSampleCollected] = useState(data.waterSampleCollected || false);
-  const [scanTarget, setScanTarget]           = useState<ScanTarget>(null);
-  const [heaterScanned, setHeaterScanned]     = useState(false);
-  const [errors, setErrors]                   = useState({ heater: '', cartridge: '', sample: '' });
-  const [cameraKey, setCameraKey]             = useState(0);   // incremented to force remount
-  const [cameraReady, setCameraReady]         = useState(false);
-  const scanLock = useRef(false); // prevents double-fire on rapid scan detection
+  const [scanOpen,        setScanOpen]        = useState(false);
+  const [heaterScanned,   setHeaterScanned]   = useState(false);
+  const [errors,          setErrors]          = useState({ heater: '', cartridge: '', sample: '' });
+
+  // Native-only state
+  const [cameraKey,   setCameraKey]   = useState(0);
+  const [cameraReady, setCameraReady] = useState(false);
+  const scanLock = useRef(false);
 
   const openScanner = async () => {
-    if (!permission?.granted) {
-      const res = await requestPermission();
-      if (!res.granted) return;
+    if (Platform.OS !== 'web') {
+      if (!permission?.granted) {
+        const res = await requestPermission();
+        if (!res.granted) return;
+      }
+      scanLock.current = false;
+      setCameraReady(false);
+      setCameraKey((k) => k + 1);
     }
-    scanLock.current = false;
-    setCameraReady(false);
-    setCameraKey((k) => k + 1); // force a fresh CameraView mount every time
     setHeaterScanned(false);
-    setScanTarget('heater');
+    setScanOpen(true);
   };
 
-  const handleBarcodeScan = ({ data: code }: { data: string }) => {
-    if (scanLock.current) return; // ignore subsequent fires until camera closes
+  const handleScan = (code: string) => {
+    if (scanLock.current) return;
     scanLock.current = true;
     setHeaterSerial(code.toUpperCase());
     setErrors((e) => ({ ...e, heater: '' }));
     setHeaterScanned(true);
-    setScanTarget(null);
+    setScanOpen(false);
   };
+
+  // Native CameraView passes { data: string }; Web passes string directly
+  const handleNativeScan = ({ data: code }: { data: string }) => handleScan(code);
 
   const handleContinue = () => {
     const e = { heater: '', cartridge: '', sample: '' };
@@ -72,73 +309,30 @@ export default function UnitRegistrationScreen() {
     router.push('/install/customer-form');
   };
 
-  // ── Full-screen QR overlay ────────────────────────────────────────────────
-  if (scanTarget && permission?.granted) {
-    return (
-      <View style={styles.cameraScreen}>
-        {/* key forces a complete remount — fixes blank camera on Android */}
-        <CameraView
-          key={cameraKey}
-          style={styles.camera}
-          facing="back"
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr', 'code128', 'code39', 'code93', 'ean13', 'ean8', 'pdf417', 'datamatrix'],
-          }}
-          onBarcodeScanned={cameraReady ? handleBarcodeScan : undefined}
-          onCameraReady={() => setCameraReady(true)}
-        >
-          <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-            <View style={styles.cameraHeader}>
-              <TouchableOpacity onPress={() => setScanTarget(null)} style={styles.camClose}>
-                <Ionicons name="close" size={26} color={colors.white} />
-              </TouchableOpacity>
-              <View style={styles.camBadge}>
-                <Ionicons name="qr-code-outline" size={14} color={colors.white} />
-                <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-                  Scan Heater QR / Barcode
-                </AppText>
-              </View>
-              <View style={{ width: 40 }} />
-            </View>
-
-            <View style={styles.finderWrapper}>
-              {!cameraReady ? (
-                <View style={styles.cameraInitBox}>
-                  <ActivityIndicator color={colors.primary} size="large" />
-                  <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
-                    Starting camera…
-                  </AppText>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.scanFrame}>
-                    <View style={[styles.corner, styles.cTL]} />
-                    <View style={[styles.corner, styles.cTR]} />
-                    <View style={[styles.corner, styles.cBL]} />
-                    <View style={[styles.corner, styles.cBR]} />
-                  </View>
-                  <AppText variant="caption" color={colors.white} style={styles.scanHint}>
-                    Hold steady — align QR or barcode inside the frame
-                  </AppText>
-                </>
-              )}
-            </View>
-
-            <View style={styles.camFooter}>
-              <TouchableOpacity style={styles.manualToggle} onPress={() => setScanTarget(null)}>
-                <Ionicons name="keypad-outline" size={16} color={colors.primary} />
-                <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>
-                  Enter manually instead
-                </AppText>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </CameraView>
-      </View>
-    );
+  // ── Camera overlay ──────────────────────────────────────────────────────────
+  if (scanOpen) {
+    if (Platform.OS === 'web') {
+      return (
+        <WebScanner
+          onScan={handleScan}
+          onClose={() => setScanOpen(false)}
+        />
+      );
+    }
+    if (permission?.granted) {
+      return (
+        <NativeScanner
+          cameraKey={cameraKey}
+          cameraReady={cameraReady}
+          onReady={() => setCameraReady(true)}
+          onScan={handleNativeScan}
+          onClose={() => setScanOpen(false)}
+        />
+      );
+    }
   }
 
-  // ── Main form ─────────────────────────────────────────────────────────────
+  // ── Main form ───────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -237,7 +431,7 @@ export default function UnitRegistrationScreen() {
 
           {/* ── Water sample checkbox ── */}
           <TouchableOpacity
-            style={[styles.checkRow, sampleCollected && styles.checkRowChecked, errors.sample && styles.checkRowError]}
+            style={[styles.checkRow, sampleCollected && styles.checkRowChecked, errors.sample ? styles.checkRowError : null]}
             onPress={() => { setSampleCollected((v) => !v); setErrors((e) => ({ ...e, sample: '' })); }}
             activeOpacity={0.8}
           >
@@ -325,8 +519,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
   },
   checkRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
-  checkRowError: { borderColor: colors.error, backgroundColor: colors.errorLight },
-  sampleHint: { lineHeight: 16, marginTop: 2 },
+  checkRowError:   { borderColor: colors.error,   backgroundColor: colors.errorLight },
+  sampleHint:  { lineHeight: 16, marginTop: 2 },
   sampleError: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: -4 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,
@@ -348,6 +542,8 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
   },
+
+  // ── Camera shared ──
   cameraScreen:  { flex: 1, backgroundColor: '#000' },
   camera:        { flex: 1 },
   cameraOverlay: { flex: 1, justifyContent: 'space-between' },
@@ -362,10 +558,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
     borderRadius: 20,
   },
-  finderWrapper: { alignItems: 'center', gap: spacing.lg },
-  cameraInitBox: { alignItems: 'center', justifyContent: 'center', height: 230 },
-  scanFrame: { width: 230, height: 230, position: 'relative' },
-  corner: { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
+  finderWrapper:  { alignItems: 'center', gap: spacing.lg },
+  cameraInitBox:  { alignItems: 'center', justifyContent: 'center', height: 230, paddingHorizontal: 24 },
+  scanFrame:      { width: 230, height: 230, position: 'relative' },
+  corner:         { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
   cTL: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
   cTR: { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
   cBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
