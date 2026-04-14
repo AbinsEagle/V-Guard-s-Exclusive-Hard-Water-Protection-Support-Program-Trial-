@@ -21,22 +21,28 @@ import { colors, spacing, radius, shadows } from '../../src/theme';
 export const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
 
 // ─── Web barcode scanner ──────────────────────────────────────────────────────
-// expo-camera's onBarcodeScanned is native-only; on web we use
-// getUserMedia (with facingMode:'environment') + BarcodeDetector API.
+// Works on ALL browsers: iOS Safari, Brave, Firefox, Chrome.
+//
+// Approach:
+//   1. getUserMedia with facingMode:'environment'  → back camera
+//   2. Draw frames to a hidden <canvas> every 300 ms
+//   3. jsQR decodes QR codes on every browser (pure JS, no native API needed)
+//   4. BarcodeDetector also runs in parallel on Chrome/Android for Code128/EAN/etc.
 
 function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClose: () => void }) {
   const videoRef  = useRef<any>(null);
+  const canvasRef = useRef<any>(null);
   const streamRef = useRef<any>(null);
   const timerRef  = useRef<any>(null);
   const lockRef   = useRef(false);
-  const [status, setStatus] = useState<'starting' | 'ready' | 'error' | 'unsupported'>('starting');
-  const [errMsg,  setErrMsg]  = useState('');
+  const [status, setStatus] = useState<'starting' | 'ready' | 'error'>('starting');
+  const [errMsg,  setErrMsg] = useState('');
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      // 1 — get camera stream, prefer back camera
+      // 1 — get camera stream, always prefer back camera
       let stream: any;
       try {
         stream = await (navigator as any).mediaDevices.getUserMedia({
@@ -47,36 +53,75 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
           },
         });
       } catch (e: any) {
-        if (!cancelled) { setStatus('error'); setErrMsg('Camera access denied — tap "Enter manually".'); }
+        if (!cancelled) {
+          setStatus('error');
+          setErrMsg('Camera access denied. Allow camera permission and try again.');
+        }
         return;
       }
       if (cancelled) { stream.getTracks().forEach((t: any) => t.stop()); return; }
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
 
-      // 2 — check BarcodeDetector support (Chrome 83+ on Android)
-      if (!('BarcodeDetector' in window)) {
-        setStatus('unsupported');
-        return;
-      }
-
-      const detector = new (window as any).BarcodeDetector({
-        formats: ['qr_code', 'code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'pdf417', 'data_matrix'],
+      // Wait until the video is actually playing
+      await new Promise<void>((resolve) => {
+        const v = videoRef.current;
+        if (!v) { resolve(); return; }
+        if (v.readyState >= 3) { resolve(); return; }
+        v.oncanplay = () => resolve();
       });
-
+      if (cancelled) return;
       setStatus('ready');
 
-      // 3 — poll for barcodes every 250 ms
-      timerRef.current = setInterval(async () => {
-        if (lockRef.current || !videoRef.current) return;
+      // 2 — optional BarcodeDetector (Chrome Android — faster, multi-format)
+      let detector: any = null;
+      if ('BarcodeDetector' in window) {
         try {
-          const results = await detector.detect(videoRef.current);
-          if (results.length > 0 && !lockRef.current) {
+          detector = new (window as any).BarcodeDetector({
+            formats: ['qr_code', 'code_128', 'code_39', 'code_93', 'ean_13', 'ean_8', 'pdf417', 'data_matrix'],
+          });
+        } catch { detector = null; }
+      }
+
+      // 3 — poll: jsQR (universal) + BarcodeDetector (if available)
+      timerRef.current = setInterval(async () => {
+        if (lockRef.current) return;
+        const video  = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || video.readyState < 2) return;
+
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) return;
+
+        canvas.width  = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+        ctx.drawImage(video, 0, 0, w, h);
+
+        // jsQR — works on every browser including iOS Safari & Brave
+        try {
+          const jsQR = (await import('jsqr')).default;
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const result  = jsQR(imgData.data, w, h, { inversionAttempts: 'dontInvert' });
+          if (result && !lockRef.current) {
             lockRef.current = true;
-            onScan(results[0].rawValue);
+            onScan(result.data);
+            return;
           }
-        } catch { /* frame not ready yet */ }
-      }, 250);
+        } catch { /* frame processing error, skip */ }
+
+        // BarcodeDetector — covers Code128 / EAN / etc. on Chrome
+        if (detector) {
+          try {
+            const results = await detector.detect(video);
+            if (results.length > 0 && !lockRef.current) {
+              lockRef.current = true;
+              onScan(results[0].rawValue);
+            }
+          } catch { /* frame not ready */ }
+        }
+      }, 300);
     })();
 
     return () => {
@@ -88,64 +133,43 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
 
   return (
     <View style={styles.cameraScreen}>
-      {/* HTML video element — valid in React Native Web / Expo Web */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore — valid HTML element in Expo Web / React Native Web */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{
-          position: 'absolute', top: 0, left: 0,
-          width: '100%', height: '100%', objectFit: 'cover',
-        } as any}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' } as any}
       />
+      {/* Hidden canvas for jsQR frame capture */}
+      {/* @ts-ignore */}
+      <canvas ref={canvasRef} style={{ display: 'none' } as any} />
 
       <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-        {/* Header */}
         <View style={styles.cameraHeader}>
           <TouchableOpacity onPress={onClose} style={styles.camClose}>
             <Ionicons name="close" size={26} color={colors.white} />
           </TouchableOpacity>
           <View style={styles.camBadge}>
             <Ionicons name="qr-code-outline" size={14} color={colors.white} />
-            <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-              Scan Heater QR / Barcode
-            </AppText>
+            <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>Scan Heater QR / Barcode</AppText>
           </View>
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Finder */}
         <View style={styles.finderWrapper}>
           {status === 'starting' && (
             <View style={styles.cameraInitBox}>
               <ActivityIndicator color={colors.primary} size="large" />
-              <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
-                Starting camera…
-              </AppText>
+              <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>Starting camera…</AppText>
             </View>
           )}
-
           {status === 'error' && (
             <View style={styles.cameraInitBox}>
               <Ionicons name="camera-outline" size={40} color={colors.error} />
-              <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center' }}>
-                {errMsg}
-              </AppText>
+              <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center' }}>{errMsg}</AppText>
             </View>
           )}
-
-          {status === 'unsupported' && (
-            <View style={styles.cameraInitBox}>
-              <Ionicons name="information-circle-outline" size={40} color={colors.primary} />
-              <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center', paddingHorizontal: 24 }}>
-                QR scanning is not supported in this browser.{'\n'}
-                Use Chrome on Android, or type the code manually.
-              </AppText>
-            </View>
-          )}
-
           {status === 'ready' && (
             <>
               <View style={styles.scanFrame}>
@@ -155,19 +179,16 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
                 <View style={[styles.corner, styles.cBR]} />
               </View>
               <AppText variant="caption" color={colors.white} style={styles.scanHint}>
-                Hold steady — align QR or barcode inside the frame
+                Hold steady — align QR inside the frame
               </AppText>
             </>
           )}
         </View>
 
-        {/* Footer */}
         <View style={styles.camFooter}>
           <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
             <Ionicons name="keypad-outline" size={16} color={colors.primary} />
-            <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>
-              Enter manually instead
-            </AppText>
+            <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>Enter manually instead</AppText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -175,7 +196,7 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
   );
 }
 
-// ─── Native barcode scanner ───────────────────────────────────────────────────
+// ─── Native barcode scanner (iOS / Android app) ───────────────────────────────
 
 function NativeScanner({
   cameraKey, cameraReady, onReady, onScan, onClose,
@@ -205,9 +226,7 @@ function NativeScanner({
             </TouchableOpacity>
             <View style={styles.camBadge}>
               <Ionicons name="qr-code-outline" size={14} color={colors.white} />
-              <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-                Scan Heater QR / Barcode
-              </AppText>
+              <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>Scan Heater QR / Barcode</AppText>
             </View>
             <View style={{ width: 40 }} />
           </View>
@@ -216,9 +235,7 @@ function NativeScanner({
             {!cameraReady ? (
               <View style={styles.cameraInitBox}>
                 <ActivityIndicator color={colors.primary} size="large" />
-                <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>
-                  Starting camera…
-                </AppText>
+                <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>Starting camera…</AppText>
               </View>
             ) : (
               <>
@@ -238,9 +255,7 @@ function NativeScanner({
           <View style={styles.camFooter}>
             <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
               <Ionicons name="keypad-outline" size={16} color={colors.primary} />
-              <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>
-                Enter manually instead
-              </AppText>
+              <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>Enter manually instead</AppText>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -290,7 +305,6 @@ export default function UnitRegistrationScreen() {
     setScanOpen(false);
   };
 
-  // Native CameraView passes { data: string }; Web passes string directly
   const handleNativeScan = ({ data: code }: { data: string }) => handleScan(code);
 
   const handleContinue = () => {
@@ -312,12 +326,7 @@ export default function UnitRegistrationScreen() {
   // ── Camera overlay ──────────────────────────────────────────────────────────
   if (scanOpen) {
     if (Platform.OS === 'web') {
-      return (
-        <WebScanner
-          onScan={handleScan}
-          onClose={() => setScanOpen(false)}
-        />
-      );
+      return <WebScanner onScan={handleScan} onClose={() => setScanOpen(false)} />;
     }
     if (permission?.granted) {
       return (
@@ -345,10 +354,7 @@ export default function UnitRegistrationScreen() {
 
       <StepIndicator currentStep={2} totalSteps={5} labels={STEP_LABELS} />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
@@ -361,8 +367,7 @@ export default function UnitRegistrationScreen() {
             </AppText>
             <View style={[styles.inputBox, errors.heater ? styles.inputErr : heaterScanned ? styles.inputOk : null]}>
               <Ionicons
-                name="barcode-outline"
-                size={18}
+                name="barcode-outline" size={18}
                 color={heaterScanned ? colors.success : colors.textSecondary}
                 style={styles.inputIcon}
               />
@@ -385,9 +390,7 @@ export default function UnitRegistrationScreen() {
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={styles.qrBtn}
-                  onPress={openScanner}
-                  activeOpacity={0.7}
+                  style={styles.qrBtn} onPress={openScanner} activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons name="qr-code-outline" size={20} color={colors.primary} />
@@ -398,8 +401,7 @@ export default function UnitRegistrationScreen() {
               ? <AppText variant="caption" color={colors.error} style={fieldStyles.error}>{errors.heater}</AppText>
               : heaterScanned
               ? <AppText variant="caption" color={colors.success} style={fieldStyles.error}>Scanned successfully</AppText>
-              : null
-            }
+              : null}
           </View>
 
           {/* ── Cartridge number ── */}
@@ -425,8 +427,7 @@ export default function UnitRegistrationScreen() {
             </View>
             {errors.cartridge
               ? <AppText variant="caption" color={colors.error} style={fieldStyles.error}>{errors.cartridge}</AppText>
-              : null
-            }
+              : null}
           </View>
 
           {/* ── Water sample checkbox ── */}
@@ -439,9 +440,7 @@ export default function UnitRegistrationScreen() {
               {sampleCollected && <Ionicons name="checkmark" size={14} color={colors.white} />}
             </View>
             <View style={{ flex: 1 }}>
-              <AppText variant="label" color={colors.textPrimary}>
-                Water Sample Collected
-              </AppText>
+              <AppText variant="label" color={colors.textPrimary}>Water Sample Collected</AppText>
               <AppText variant="caption2" color={colors.textSecondary} style={styles.sampleHint}>
                 Use the sample bottle in the package, collect the water sample, and send it back to the research centre.
               </AppText>
@@ -488,8 +487,7 @@ const styles = StyleSheet.create({
   body: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl,
-    gap: spacing.md,
+    padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
   },
   inputBox: {
     flexDirection: 'row', alignItems: 'center',
@@ -497,24 +495,21 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, backgroundColor: colors.surface,
     paddingHorizontal: spacing.md, minHeight: 50,
   },
-  inputErr: { borderColor: colors.error },
-  inputOk:  { borderColor: colors.success },
+  inputErr:  { borderColor: colors.error },
+  inputOk:   { borderColor: colors.success },
   inputIcon: { marginRight: spacing.sm },
   input: {
     flex: 1, fontSize: 16, color: colors.textPrimary,
     paddingVertical: spacing.sm, letterSpacing: 1,
   },
   qrBtn: {
-    padding: spacing.xs,
-    backgroundColor: colors.primaryFaint,
-    borderRadius: radius.sm,
-    marginLeft: spacing.xs,
+    padding: spacing.xs, backgroundColor: colors.primaryFaint,
+    borderRadius: radius.sm, marginLeft: spacing.xs,
   },
   scannedBadge: { marginLeft: spacing.xs },
   checkRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    backgroundColor: colors.surface, borderRadius: radius.md,
     borderWidth: 1.5, borderColor: colors.border,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
   },
@@ -524,26 +519,22 @@ const styles = StyleSheet.create({
   sampleError: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: -4 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6,
-    borderWidth: 1.5, borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
   checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
   primaryBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg, paddingVertical: spacing.md,
-    marginTop: spacing.sm,
-    ...shadows.sm,
+    backgroundColor: colors.primary, borderRadius: radius.lg,
+    paddingVertical: spacing.md, marginTop: spacing.sm, ...shadows.sm,
   },
   btnArrow: {
-    marginLeft: spacing.md,
-    backgroundColor: colors.primaryDark,
+    marginLeft: spacing.md, backgroundColor: colors.primaryDark,
     width: 26, height: 26, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
   },
 
-  // ── Camera shared ──
+  // Camera shared
   cameraScreen:  { flex: 1, backgroundColor: '#000' },
   camera:        { flex: 1 },
   cameraOverlay: { flex: 1, justifyContent: 'space-between' },
@@ -555,13 +546,12 @@ const styles = StyleSheet.create({
   camBadge: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
-    borderRadius: 20,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: 20,
   },
-  finderWrapper:  { alignItems: 'center', gap: spacing.lg },
-  cameraInitBox:  { alignItems: 'center', justifyContent: 'center', height: 230, paddingHorizontal: 24 },
-  scanFrame:      { width: 230, height: 230, position: 'relative' },
-  corner:         { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
+  finderWrapper: { alignItems: 'center', gap: spacing.lg },
+  cameraInitBox: { alignItems: 'center', justifyContent: 'center', height: 230, paddingHorizontal: 24 },
+  scanFrame:     { width: 230, height: 230, position: 'relative' },
+  corner:        { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
   cTL: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
   cTR: { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
   cBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
