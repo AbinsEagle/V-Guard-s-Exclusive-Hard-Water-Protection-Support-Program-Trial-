@@ -64,7 +64,7 @@ const USAGE_OPTIONS: { label: string; value: UsagePattern }[] = [
   { label: 'Seasonal',         value: 'Seasonal (winter only)' },
 ];
 
-const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5', '6', '7'];
+const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5'];
 
 interface Errors {
   customerName: string; customerWhatsApp: string; pincode: string;
@@ -143,7 +143,6 @@ export default function CustomerFormScreen() {
     if (!waterSource) e.waterSource = 'Please select water source';
     if (!waterHardness) e.waterHardnessEstimate = 'Please select TDS range';
     if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–7)';
-    if (!waterFeel.trim()) e.waterQualityFeel = 'Required — describe how the customer perceives the water';
     if (!heaterModel.trim()) e.heaterModel = 'Required';
     if (!resolvedCapacity.trim()) e.heaterCapacity = 'Please select capacity';
     if (!heaterWattage) e.heaterWattage = 'Please select wattage';
@@ -303,11 +302,11 @@ export default function CustomerFormScreen() {
                   />
                 ))}
               </View>
-              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>7 Worst</AppText>
+              <AppText variant="caption2" color={colors.textSecondary} style={styles.scaleEndLabel}>5 Worst</AppText>
             </View>
           </Field>
 
-          <Field label="How does the water feel? (customer's words)" required error={errors.waterQualityFeel}>
+          <Field label="How does the water feel? (customer's words)" error={errors.waterQualityFeel}>
             <View style={[styles.inputBox, errors.waterQualityFeel ? styles.inputErr : null]}>
               <TextInput
                 style={[styles.input, styles.multilineInput]}

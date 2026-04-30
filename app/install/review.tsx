@@ -86,7 +86,7 @@ export default function ReviewScreen() {
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
-          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 7`} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 5`} /> : null}
         </Section>
 
         {/* Heater Specs */}
