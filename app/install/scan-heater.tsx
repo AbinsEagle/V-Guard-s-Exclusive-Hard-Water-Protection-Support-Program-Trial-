@@ -292,7 +292,8 @@ export default function UnitRegistrationScreen() {
   const handleScan = (code: string) => {
     if (scanLock.current) return;
     scanLock.current = true;
-    setHeaterSerial(code.toUpperCase());
+    const upper = code.toUpperCase();
+    setHeaterSerial(upper.startsWith('Q-') ? upper : `Q-${upper}`);
     setErrors((e) => ({ ...e, heater: '' }));
     setHeaterScanned(true);
     setScanOpen(false);
