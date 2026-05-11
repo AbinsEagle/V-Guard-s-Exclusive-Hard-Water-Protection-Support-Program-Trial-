@@ -6,6 +6,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -75,6 +76,8 @@ interface Errors {
 
 export default function CustomerFormScreen() {
   const { data, update } = useInstallation();
+  const { width: screenWidth } = useWindowDimensions();
+  const isSmall = screenWidth < 380; // e.g. iPhone SE, older Android
 
   const [customerName,    setCustomerName]    = useState(data.customerName);
   const [whatsApp,        setWhatsApp]        = useState(data.customerWhatsApp);
@@ -142,7 +145,7 @@ export default function CustomerFormScreen() {
     else if (!/^\d{6}$/.test(pincode.trim())) e.pincode = 'Enter a valid 6-digit pincode';
     if (!waterSource) e.waterSource = 'Please select water source';
     if (!waterHardness) e.waterHardnessEstimate = 'Please select TDS range';
-    if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–7)';
+    if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–5)';
     if (!heaterModel.trim()) e.heaterModel = 'Required';
     if (!resolvedCapacity.trim()) e.heaterCapacity = 'Please select capacity';
     if (!heaterWattage) e.heaterWattage = 'Please select wattage';
@@ -365,8 +368,8 @@ export default function CustomerFormScreen() {
             </View>
           </Field>
 
-          <Field label="Age (years)" required error={errors.heaterAgeYears}>
-            <View style={[styles.inputBox, errors.heaterAgeYears ? styles.inputErr : null]}>
+          <Field label="Water Heater Age (years)" required error={errors.heaterAgeYears}>
+            <View style={[styles.inputBox, errors.heaterAgeYears ? styles.inputErr : null, { width: isSmall ? 88 : 108, alignSelf: 'flex-start' }]}>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. 3"
