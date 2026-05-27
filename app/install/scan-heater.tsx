@@ -271,7 +271,9 @@ export default function UnitRegistrationScreen() {
   const [permission, requestPermission] = useCameraPermissions();
 
   const [heaterSerial,    setHeaterSerial]    = useState(data.heaterSerialNumber || '');
-  const [cartridgeNum,    setCartridgeNum]     = useState(data.cartridgeNumber || '');
+  const [cartridgeNum,    setCartridgeNum]     = useState(
+    data.cartridgeNumber ? data.cartridgeNumber.replace(/^VG-/i, '') : ''
+  );
   const [sampleCollected, setSampleCollected] = useState(data.waterSampleCollected || false);
   const [scanOpen,        setScanOpen]        = useState(false);
   const [heaterScanned,   setHeaterScanned]   = useState(false);
@@ -317,7 +319,7 @@ export default function UnitRegistrationScreen() {
 
     update({
       heaterSerialNumber:   heaterSerial.trim(),
-      cartridgeNumber:      cartridgeNum.trim(),
+      cartridgeNumber:      cartridgeNum.trim() ? 'VG-' + cartridgeNum.trim() : '',
       waterSampleCollected: sampleCollected,
     });
     router.push('/install/customer-form');
@@ -411,13 +413,15 @@ export default function UnitRegistrationScreen() {
             </AppText>
             <View style={[styles.inputBox, errors.cartridge ? styles.inputErr : null]}>
               <Ionicons name="cube-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
+              <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>VG-</AppText>
+              <View style={styles.prefixDiv} />
               <TextInput
                 style={styles.input}
-                placeholder="e.g. VG-AS-00123"
+                placeholder="0001"
                 placeholderTextColor={colors.textHint}
                 value={cartridgeNum}
                 onChangeText={(t) => {
-                  setCartridgeNum(t.toUpperCase());
+                  setCartridgeNum(t.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 8));
                   setErrors((e) => ({ ...e, cartridge: '' }));
                 }}
                 autoCapitalize="characters"
@@ -498,6 +502,8 @@ const styles = StyleSheet.create({
   inputErr:  { borderColor: colors.error },
   inputOk:   { borderColor: colors.success },
   inputIcon: { marginRight: spacing.sm },
+  prefix:    { marginRight: spacing.xs, fontWeight: '600' },
+  prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
   input: {
     flex: 1, fontSize: 16, color: colors.textPrimary,
     paddingVertical: spacing.sm, letterSpacing: 1,
