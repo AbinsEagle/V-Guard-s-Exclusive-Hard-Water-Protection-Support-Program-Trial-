@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing, radius, shadows } from '../../src/theme';
+import { useColors, spacing, radius, shadows } from '../../src/theme';
 import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
 const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
@@ -35,11 +35,14 @@ const AGREEMENT_ITEMS = [
 
 export default function ConsentScreen() {
   const { data, update } = useInstallation();
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [customerName, setCustomerName] = useState(data.customerName || '');
   const [whatsApp,     setWhatsApp]     = useState(data.customerWhatsApp || '');
   const [pincode,      setPincode]      = useState(data.pincode || '');
-  const [hasSignature, setHasSignature] = useState(false);
+  // If consent was already given, treat signature as captured without redrawing
+  const [hasSignature, setHasSignature] = useState(data.consentGiven || false);
   const [confirmed,    setConfirmed]    = useState(data.consentGiven || false);
   const [generating,   setGenerating]   = useState(false);
   const [errors,       setErrors]       = useState({
@@ -49,23 +52,6 @@ export default function ConsentScreen() {
   const canvasRef    = useRef<any>(null);
   const isDrawingRef = useRef(false);
   const lastPtRef    = useRef<{ x: number; y: number } | null>(null);
-
-  // Snapshot stored signature at mount time for back-nav restore
-  const [preloadedSig] = useState(data.consentSignatureUri);
-
-  // Restore a previously captured signature when navigating back
-  useEffect(() => {
-    if (!preloadedSig || !canvasRef.current) return;
-    const img = new (window as any).Image();
-    img.onload = () => {
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, CANVAS_W, CANVAS_H);
-        setHasSignature(true);
-      }
-    };
-    img.src = preloadedSig;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Convert CSS pointer coords to canvas internal coordinates
   function getCanvasPoint(e: any): { x: number; y: number } {
@@ -136,7 +122,10 @@ export default function ConsentScreen() {
   const handleContinue = async () => {
     if (!validate()) return;
     setGenerating(true);
-    const rawSig  = canvasRef.current?.toDataURL('image/png') ?? null;
+    // If user re-signed on this visit, capture from canvas; otherwise keep existing doc
+    const rawSig = hasSignature && !data.consentGiven
+      ? (canvasRef.current?.toDataURL('image/png') ?? null)
+      : (canvasRef.current?.toDataURL('image/png') ?? null);
     const timestamp = new Date().toISOString();
     const docUri  = await generateConsentDocument({
       customerName:     customerName.trim(),
@@ -231,10 +220,10 @@ export default function ConsentScreen() {
               <AppText variant="sectionTitle" color={colors.textPrimary}>Customer Information</AppText>
             </View>
 
-            <Field label="Customer Name" required error={errors.customerName}>
+            <Field label="Customer Name" required error={errors.customerName} colors={colors}>
               <View style={[styles.inputBox, errors.customerName ? styles.inputErr : null]}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, Platform.OS === 'web' ? { outline: 'none' } as any : null]}
                   placeholder="Full name"
                   placeholderTextColor={colors.textHint}
                   value={customerName}
@@ -244,12 +233,12 @@ export default function ConsentScreen() {
               </View>
             </Field>
 
-            <Field label="WhatsApp Number" required error={errors.whatsApp}>
+            <Field label="WhatsApp Number" required error={errors.whatsApp} colors={colors}>
               <View style={[styles.inputBox, errors.whatsApp ? styles.inputErr : null]}>
                 <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>+91</AppText>
                 <View style={styles.prefixDiv} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, Platform.OS === 'web' ? { outline: 'none' } as any : null]}
                   placeholder="10-digit number"
                   placeholderTextColor={colors.textHint}
                   value={whatsApp}
@@ -260,10 +249,10 @@ export default function ConsentScreen() {
               </View>
             </Field>
 
-            <Field label="Pincode" required error={errors.pincode}>
+            <Field label="Pincode" required error={errors.pincode} colors={colors}>
               <View style={[styles.inputBox, errors.pincode ? styles.inputErr : null]}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, Platform.OS === 'web' ? { outline: 'none' } as any : null]}
                   placeholder="6-digit pincode"
                   placeholderTextColor={colors.textHint}
                   value={pincode}
@@ -298,7 +287,7 @@ export default function ConsentScreen() {
                   width: '100%',
                   height: CANVAS_H,
                   borderRadius: 8,
-                  backgroundColor: '#FAFAFA',
+                  backgroundColor: '#FFFFFF',   // always white — signature embeds in white document
                   touchAction: 'none',
                   cursor: 'crosshair',
                   display: 'block',
@@ -308,11 +297,23 @@ export default function ConsentScreen() {
                 onPointerUp={handlePointerUp}
                 onPointerLeave={handlePointerUp}
               />
-              {!hasSignature && (
+
+              {/* Placeholder — shown only when no signature and consent not yet given */}
+              {!hasSignature && !data.consentGiven && (
                 <View style={styles.signaturePlaceholder} pointerEvents="none">
                   <Ionicons name="pencil-outline" size={20} color={colors.borderOpaque} />
                   <AppText variant="caption" color={colors.borderOpaque} style={{ marginLeft: spacing.xs }}>
                     Sign here
+                  </AppText>
+                </View>
+              )}
+
+              {/* Already-captured notice — shown when returning to this screen */}
+              {!hasSignature && data.consentGiven && (
+                <View style={styles.signaturePlaceholder} pointerEvents="none">
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                  <AppText variant="caption" color={colors.success} style={{ marginLeft: spacing.xs }}>
+                    Signature captured — sign again to update
                   </AppText>
                 </View>
               )}
@@ -395,17 +396,18 @@ export default function ConsentScreen() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Field({ label, required, error, children }: {
+function Field({ label, required, error, children, colors }: {
   label: string; required?: boolean; error?: string; children: React.ReactNode;
+  colors: ReturnType<typeof useColors>;
 }) {
   return (
-    <View style={fieldStyles.wrapper}>
-      <AppText variant="label" style={fieldStyles.label}>
+    <View style={{ marginBottom: spacing.xs }}>
+      <AppText variant="label" style={{ marginBottom: spacing.xs }}>
         {label}{required && <AppText variant="label" color={colors.error}> *</AppText>}
       </AppText>
       {children}
       {error ? (
-        <AppText variant="caption" color={colors.error} style={fieldStyles.error}>{error}</AppText>
+        <AppText variant="caption" color={colors.error} style={{ marginTop: 4 }}>{error}</AppText>
       ) : null}
     </View>
   );
@@ -413,116 +415,107 @@ function Field({ label, required, error, children }: {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: colors.headerBg },
-  flex:    { flex: 1 },
-  header:  {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.headerBg,
-  },
-  backBtn: { padding: spacing.xs },
-  body: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
-  },
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    safe:    { flex: 1, backgroundColor: colors.headerBg },
+    flex:    { flex: 1 },
+    header:  {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+      backgroundColor: colors.headerBg,
+    },
+    backBtn: { padding: spacing.xs },
+    body: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
+    },
 
-  titleBlock: { gap: spacing.xs },
+    titleBlock: { gap: spacing.xs },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  sectionIconBox: {
-    width: 24, height: 24, borderRadius: 6,
-    backgroundColor: colors.headerBg,
-    alignItems: 'center', justifyContent: 'center',
-  },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+    sectionIconBox: {
+      width: 24, height: 24, borderRadius: 6,
+      backgroundColor: colors.headerBg,
+      alignItems: 'center', justifyContent: 'center',
+    },
 
-  // Disclaimer
-  disclaimerCard: {
-    backgroundColor: colors.primaryFaint, borderRadius: radius.md,
-    padding: spacing.md,
-    borderLeftWidth: 3, borderLeftColor: colors.primary,
-  },
-  disclaimerText: { lineHeight: 20 },
+    disclaimerCard: {
+      backgroundColor: colors.primaryFaint, borderRadius: radius.md,
+      padding: spacing.md,
+      borderLeftWidth: 3, borderLeftColor: colors.primary,
+    },
+    disclaimerText: { lineHeight: 20 },
 
-  // Agreement
-  agreementCard: {
-    backgroundColor: colors.surface, borderRadius: radius.md,
-    padding: spacing.md, borderWidth: 1, borderColor: colors.border,
-    gap: spacing.sm,
-  },
-  agreementRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  agreementCheck: {
-    width: 18, height: 18, borderRadius: 4,
-    backgroundColor: colors.success,
-    alignItems: 'center', justifyContent: 'center',
-    marginTop: 2, flexShrink: 0,
-  },
-  agreementText: { flex: 1, lineHeight: 18 },
+    agreementCard: {
+      backgroundColor: colors.surface, borderRadius: radius.md,
+      padding: spacing.md, borderWidth: 1, borderColor: colors.border,
+      gap: spacing.sm,
+    },
+    agreementRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+    agreementCheck: {
+      width: 18, height: 18, borderRadius: 4,
+      backgroundColor: colors.success,
+      alignItems: 'center', justifyContent: 'center',
+      marginTop: 2, flexShrink: 0,
+    },
+    agreementText: { flex: 1, lineHeight: 18 },
 
-  // Customer inputs
-  inputSection: { gap: spacing.sm },
-  inputBox: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: colors.border,
-    borderRadius: radius.md, backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md, minHeight: 50,
-  },
-  inputErr:  { borderColor: colors.error },
-  prefix:    { marginRight: spacing.xs, fontWeight: '600' },
-  prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
-  input:     { flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm },
+    inputSection: { gap: spacing.sm },
+    inputBox: {
+      flexDirection: 'row', alignItems: 'center',
+      borderWidth: 1.5, borderColor: colors.border,
+      borderRadius: radius.md, backgroundColor: colors.surface,
+      paddingHorizontal: spacing.md, minHeight: 50,
+    },
+    inputErr:  { borderColor: colors.error },
+    prefix:    { marginRight: spacing.xs, fontWeight: '600' },
+    prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
+    input:     { flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm },
 
-  // Signature
-  signatureSection: { gap: spacing.sm },
-  signatureHint:    { marginBottom: spacing.xs },
-  canvasWrapper: {
-    borderWidth: 1.5, borderColor: colors.border,
-    borderRadius: radius.md, overflow: 'hidden',
-    backgroundColor: '#FAFAFA', position: 'relative', minHeight: 160,
-  },
-  canvasWrapperErr: { borderColor: colors.error },
-  signaturePlaceholder: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-  },
-  clearBtn: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', padding: spacing.xs },
-  fieldError: { marginTop: 2 },
+    signatureSection: { gap: spacing.sm },
+    signatureHint:    { marginBottom: spacing.xs },
+    canvasWrapper: {
+      borderWidth: 1.5, borderColor: colors.border,
+      borderRadius: radius.md, overflow: 'hidden',
+      position: 'relative', minHeight: 160,
+    },
+    canvasWrapperErr: { borderColor: colors.error },
+    signaturePlaceholder: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    },
+    clearBtn: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', padding: spacing.xs },
+    fieldError: { marginTop: 2 },
 
-  // Confirmation
-  confirmRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm,
-    backgroundColor: colors.surface, borderRadius: radius.md,
-    borderWidth: 1.5, borderColor: colors.border,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-  },
-  confirmRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
-  confirmRowError:   { borderColor: colors.error,   backgroundColor: colors.errorLight },
-  checkbox: {
-    width: 24, height: 24, borderRadius: 6,
-    borderWidth: 1.5, borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0, marginTop: 1,
-  },
-  checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
+    confirmRow: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm,
+      backgroundColor: colors.surface, borderRadius: radius.md,
+      borderWidth: 1.5, borderColor: colors.border,
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
+    },
+    confirmRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+    confirmRowError:   { borderColor: colors.error,   backgroundColor: colors.errorLight },
+    checkbox: {
+      width: 24, height: 24, borderRadius: 6,
+      borderWidth: 1.5, borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, marginTop: 1,
+    },
+    checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
 
-  legalFooter: { textAlign: 'center', lineHeight: 16, paddingHorizontal: spacing.md },
+    legalFooter: { textAlign: 'center', lineHeight: 16, paddingHorizontal: spacing.md },
 
-  primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary, borderRadius: radius.lg,
-    paddingVertical: spacing.md, marginTop: spacing.sm, ...shadows.sm,
-  },
-  btnArrow: {
-    marginLeft: spacing.md, backgroundColor: colors.primaryDark,
-    width: 26, height: 26, borderRadius: 13,
-    alignItems: 'center', justifyContent: 'center',
-  },
-});
-
-const fieldStyles = StyleSheet.create({
-  wrapper: { marginBottom: spacing.xs },
-  label:   { marginBottom: spacing.xs },
-  error:   { marginTop: 4 },
-});
+    primaryBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.primary, borderRadius: radius.lg,
+      paddingVertical: spacing.md, marginTop: spacing.sm, ...shadows.sm,
+    },
+    btnArrow: {
+      marginLeft: spacing.md, backgroundColor: colors.primaryDark,
+      width: 26, height: 26, borderRadius: 13,
+      alignItems: 'center', justifyContent: 'center',
+    },
+  });
+}

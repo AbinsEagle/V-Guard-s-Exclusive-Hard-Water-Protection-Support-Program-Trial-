@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing, radius, shadows } from '../../src/theme';
+import { useColors, spacing, radius, shadows } from '../../src/theme';
 
 export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
@@ -30,6 +30,7 @@ export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos
 //   4. BarcodeDetector also runs in parallel on Chrome/Android for Code128/EAN/etc.
 
 function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClose: () => void }) {
+  const colors = useColors();
   const videoRef  = useRef<any>(null);
   const canvasRef = useRef<any>(null);
   const streamRef = useRef<any>(null);
@@ -132,7 +133,7 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
   }, []);
 
   return (
-    <View style={styles.cameraScreen}>
+    <View style={cameraStyles.cameraScreen}>
       {/* @ts-ignore — valid HTML element in Expo Web / React Native Web */}
       <video
         ref={videoRef}
@@ -145,48 +146,52 @@ function WebScanner({ onScan, onClose }: { onScan: (code: string) => void; onClo
       {/* @ts-ignore */}
       <canvas ref={canvasRef} style={{ display: 'none' } as any} />
 
-      <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-        <View style={styles.cameraHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.camClose}>
+      <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+        <View style={cameraStyles.cameraHeader}>
+          <TouchableOpacity onPress={onClose} style={cameraStyles.camClose}>
             <Ionicons name="close" size={26} color={colors.white} />
           </TouchableOpacity>
-          <View style={styles.camBadge}>
+          <View style={cameraStyles.camBadge}>
             <Ionicons name="qr-code-outline" size={14} color={colors.white} />
             <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>Scan Heater QR / Barcode</AppText>
           </View>
           <View style={{ width: 40 }} />
         </View>
 
-        <View style={styles.finderWrapper}>
+        <View style={cameraStyles.finderWrapper}>
           {status === 'starting' && (
-            <View style={styles.cameraInitBox}>
+            <View style={cameraStyles.cameraInitBox}>
               <ActivityIndicator color={colors.primary} size="large" />
               <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>Starting camera…</AppText>
             </View>
           )}
           {status === 'error' && (
-            <View style={styles.cameraInitBox}>
+            <View style={cameraStyles.cameraInitBox}>
               <Ionicons name="camera-outline" size={40} color={colors.error} />
               <AppText variant="caption" color={colors.white} style={{ marginTop: 10, textAlign: 'center' }}>{errMsg}</AppText>
             </View>
           )}
           {status === 'ready' && (
             <>
-              <View style={styles.scanFrame}>
-                <View style={[styles.corner, styles.cTL]} />
-                <View style={[styles.corner, styles.cTR]} />
-                <View style={[styles.corner, styles.cBL]} />
-                <View style={[styles.corner, styles.cBR]} />
+              <View style={{ width: 230, height: 230, position: 'relative' }}>
+                {([
+                  { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+                  { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+                  { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+                  { bottom: 0, right: 0, borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+                ] as any[]).map((s, i) => (
+                  <View key={i} style={[{ position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary }, s]} />
+                ))}
               </View>
-              <AppText variant="caption" color={colors.white} style={styles.scanHint}>
+              <AppText variant="caption" color={colors.white} style={cameraStyles.scanHint}>
                 Hold steady — align QR inside the frame
               </AppText>
             </>
           )}
         </View>
 
-        <View style={styles.camFooter}>
-          <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
+        <View style={cameraStyles.camFooter}>
+          <TouchableOpacity style={cameraStyles.manualToggle} onPress={onClose}>
             <Ionicons name="keypad-outline" size={16} color={colors.primary} />
             <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>Enter manually instead</AppText>
           </TouchableOpacity>
@@ -207,11 +212,13 @@ function NativeScanner({
   onScan: (e: { data: string }) => void;
   onClose: () => void;
 }) {
+  const colors = useColors();
+  const corner = { position: 'absolute' as const, width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary };
   return (
-    <View style={styles.cameraScreen}>
+    <View style={cameraStyles.cameraScreen}>
       <CameraView
         key={cameraKey}
-        style={styles.camera}
+        style={cameraStyles.camera}
         facing="back"
         barcodeScannerSettings={{
           barcodeTypes: ['qr', 'code128', 'code39', 'code93', 'ean13', 'ean8', 'pdf417', 'datamatrix'],
@@ -219,41 +226,41 @@ function NativeScanner({
         onBarcodeScanned={cameraReady ? onScan : undefined}
         onCameraReady={onReady}
       >
-        <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-          <View style={styles.cameraHeader}>
-            <TouchableOpacity onPress={onClose} style={styles.camClose}>
+        <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+          <View style={cameraStyles.cameraHeader}>
+            <TouchableOpacity onPress={onClose} style={cameraStyles.camClose}>
               <Ionicons name="close" size={26} color={colors.white} />
             </TouchableOpacity>
-            <View style={styles.camBadge}>
+            <View style={cameraStyles.camBadge}>
               <Ionicons name="qr-code-outline" size={14} color={colors.white} />
               <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>Scan Heater QR / Barcode</AppText>
             </View>
             <View style={{ width: 40 }} />
           </View>
 
-          <View style={styles.finderWrapper}>
+          <View style={cameraStyles.finderWrapper}>
             {!cameraReady ? (
-              <View style={styles.cameraInitBox}>
+              <View style={cameraStyles.cameraInitBox}>
                 <ActivityIndicator color={colors.primary} size="large" />
                 <AppText variant="caption" color={colors.white} style={{ marginTop: 10 }}>Starting camera…</AppText>
               </View>
             ) : (
               <>
-                <View style={styles.scanFrame}>
-                  <View style={[styles.corner, styles.cTL]} />
-                  <View style={[styles.corner, styles.cTR]} />
-                  <View style={[styles.corner, styles.cBL]} />
-                  <View style={[styles.corner, styles.cBR]} />
+                <View style={{ width: 230, height: 230, position: 'relative' }}>
+                  <View style={[corner, { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH }]} />
+                  <View style={[corner, { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH }]} />
+                  <View style={[corner, { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH }]} />
+                  <View style={[corner, { bottom: 0, right: 0, borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH }]} />
                 </View>
-                <AppText variant="caption" color={colors.white} style={styles.scanHint}>
+                <AppText variant="caption" color={colors.white} style={cameraStyles.scanHint}>
                   Hold steady — align QR or barcode inside the frame
                 </AppText>
               </>
             )}
           </View>
 
-          <View style={styles.camFooter}>
-            <TouchableOpacity style={styles.manualToggle} onPress={onClose}>
+          <View style={cameraStyles.camFooter}>
+            <TouchableOpacity style={cameraStyles.manualToggle} onPress={onClose}>
               <Ionicons name="keypad-outline" size={16} color={colors.primary} />
               <AppText variant="caption" color={colors.primary} style={{ marginLeft: 6 }}>Enter manually instead</AppText>
             </TouchableOpacity>
@@ -268,11 +275,13 @@ function NativeScanner({
 
 export default function UnitRegistrationScreen() {
   const { data, update } = useInstallation();
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [permission, requestPermission] = useCameraPermissions();
 
   const [heaterSerial,    setHeaterSerial]    = useState(data.heaterSerialNumber || '');
   const [cartridgeNum,    setCartridgeNum]     = useState(
-    data.cartridgeNumber ? data.cartridgeNumber.replace(/^VG-/i, '') : ''
+    data.cartridgeNumber ? data.cartridgeNumber.replace(/^AS-/i, '') : ''
   );
   const [sampleCollected, setSampleCollected] = useState(data.waterSampleCollected || false);
   const [scanOpen,        setScanOpen]        = useState(false);
@@ -319,7 +328,7 @@ export default function UnitRegistrationScreen() {
 
     update({
       heaterSerialNumber:   heaterSerial.trim(),
-      cartridgeNumber:      cartridgeNum.trim() ? 'VG-' + cartridgeNum.trim() : '',
+      cartridgeNumber:      cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim() : '',
       waterSampleCollected: sampleCollected,
     });
     router.push('/install/consent');
@@ -413,7 +422,7 @@ export default function UnitRegistrationScreen() {
             </AppText>
             <View style={[styles.inputBox, errors.cartridge ? styles.inputErr : null]}>
               <Ionicons name="cube-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
-              <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>VG-</AppText>
+              <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>AS-</AppText>
               <View style={styles.prefixDiv} />
               <TextInput
                 style={styles.input}
@@ -421,7 +430,7 @@ export default function UnitRegistrationScreen() {
                 placeholderTextColor={colors.textHint}
                 value={cartridgeNum}
                 onChangeText={(t) => {
-                  setCartridgeNum(t.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 8));
+                  setCartridgeNum(t.replace(/\D/g, '').slice(0, 4));
                   setErrors((e) => ({ ...e, cartridge: '' }));
                 }}
                 autoCapitalize="characters"
@@ -446,7 +455,7 @@ export default function UnitRegistrationScreen() {
             <View style={{ flex: 1 }}>
               <AppText variant="label" color={colors.textPrimary}>Water Sample Collected</AppText>
               <AppText variant="caption2" color={colors.textSecondary} style={styles.sampleHint}>
-                Use the sample bottle in the package, collect the water sample, and send it back to the research centre.
+                Fill both 500 ml bottles with tap water before installing the cartridge. Use water from the same tap.
               </AppText>
             </View>
             <AppText variant="caption2" color={sampleCollected ? colors.primary : colors.textSecondary} style={{ fontWeight: '700' }}>
@@ -479,68 +488,8 @@ export default function UnitRegistrationScreen() {
 const CORNER_SIZE  = 20;
 const CORNER_WIDTH = 3;
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.headerBg },
-  flex: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.headerBg,
-  },
-  backBtn: { padding: spacing.xs },
-  body: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
-  },
-  inputBox: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: colors.border,
-    borderRadius: radius.md, backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md, minHeight: 50,
-  },
-  inputErr:  { borderColor: colors.error },
-  inputOk:   { borderColor: colors.success },
-  inputIcon: { marginRight: spacing.sm },
-  prefix:    { marginRight: spacing.xs, fontWeight: '600' },
-  prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
-  input: {
-    flex: 1, fontSize: 16, color: colors.textPrimary,
-    paddingVertical: spacing.sm, letterSpacing: 1,
-  },
-  qrBtn: {
-    padding: spacing.xs, backgroundColor: colors.primaryFaint,
-    borderRadius: radius.sm, marginLeft: spacing.xs,
-  },
-  scannedBadge: { marginLeft: spacing.xs },
-  checkRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.surface, borderRadius: radius.md,
-    borderWidth: 1.5, borderColor: colors.border,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
-  },
-  checkRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
-  checkRowError:   { borderColor: colors.error,   backgroundColor: colors.errorLight },
-  sampleHint:  { lineHeight: 16, marginTop: 2 },
-  sampleError: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: -4 },
-  checkbox: {
-    width: 24, height: 24, borderRadius: 6,
-    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
-  primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary, borderRadius: radius.lg,
-    paddingVertical: spacing.md, marginTop: spacing.sm, ...shadows.sm,
-  },
-  btnArrow: {
-    marginLeft: spacing.md, backgroundColor: colors.primaryDark,
-    width: 26, height: 26, borderRadius: 13,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  // Camera shared
+// Camera overlay styles are always dark — not theme-dependent
+const cameraStyles = StyleSheet.create({
   cameraScreen:  { flex: 1, backgroundColor: '#000' },
   camera:        { flex: 1 },
   cameraOverlay: { flex: 1, justifyContent: 'space-between' },
@@ -557,11 +506,6 @@ const styles = StyleSheet.create({
   finderWrapper: { alignItems: 'center', gap: spacing.lg },
   cameraInitBox: { alignItems: 'center', justifyContent: 'center', height: 230, paddingHorizontal: 24 },
   scanFrame:     { width: 230, height: 230, position: 'relative' },
-  corner:        { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
-  cTL: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
-  cTR: { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
-  cBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
-  cBR: { bottom: 0, right: 0, borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
   scanHint: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
@@ -575,6 +519,76 @@ const styles = StyleSheet.create({
     borderRadius: 20, alignSelf: 'center',
   },
 });
+
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.headerBg },
+    flex: { flex: 1 },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+      backgroundColor: colors.headerBg,
+    },
+    backBtn: { padding: spacing.xs },
+    body: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md,
+    },
+    inputBox: {
+      flexDirection: 'row', alignItems: 'center',
+      borderWidth: 1.5, borderColor: colors.border,
+      borderRadius: radius.md, backgroundColor: colors.surface,
+      paddingHorizontal: spacing.md, minHeight: 50,
+    },
+    inputErr:  { borderColor: colors.error },
+    inputOk:   { borderColor: colors.success },
+    inputIcon: { marginRight: spacing.sm },
+    prefix:    { marginRight: spacing.xs, fontWeight: '600' },
+    prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
+    input: {
+      flex: 1, fontSize: 16, color: colors.textPrimary,
+      paddingVertical: spacing.sm, letterSpacing: 1,
+      ...(Platform.OS === 'web' ? { outline: 'none' } as any : {}),
+    },
+    qrBtn: {
+      padding: spacing.xs, backgroundColor: colors.primaryFaint,
+      borderRadius: radius.sm, marginLeft: spacing.xs,
+    },
+    scannedBadge: { marginLeft: spacing.xs },
+    checkRow: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+      backgroundColor: colors.surface, borderRadius: radius.md,
+      borderWidth: 1.5, borderColor: colors.border,
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
+    },
+    checkRowChecked: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
+    checkRowError:   { borderColor: colors.error,   backgroundColor: colors.errorLight },
+    sampleHint:  { lineHeight: 16, marginTop: 2 },
+    sampleError: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: -4 },
+    checkbox: {
+      width: 24, height: 24, borderRadius: 6,
+      borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    checkboxChecked: { borderColor: colors.primary, backgroundColor: colors.primary },
+    primaryBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.primary, borderRadius: radius.lg,
+      paddingVertical: spacing.md, marginTop: spacing.sm, ...shadows.sm,
+    },
+    btnArrow: {
+      marginLeft: spacing.md, backgroundColor: colors.primaryDark,
+      width: 26, height: 26, borderRadius: 13,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    corner: { position: 'absolute', width: CORNER_SIZE, height: CORNER_SIZE, borderColor: colors.primary },
+    cTL: { top: 0, left: 0, borderTopWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+    cTR: { top: 0, right: 0, borderTopWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+    cBL: { bottom: 0, left: 0, borderBottomWidth: CORNER_WIDTH, borderLeftWidth: CORNER_WIDTH },
+    cBR: { bottom: 0, right: 0, borderBottomWidth: CORNER_WIDTH, borderRightWidth: CORNER_WIDTH },
+  });
+}
 
 const fieldStyles = StyleSheet.create({
   wrapper: {},
