@@ -40,9 +40,20 @@ export default function SuccessScreen() {
     const docUri = snap.consentSignatureUri;
     if (!docUri) return;
     try {
-      const res  = await fetch(docUri);
-      const blob = await res.blob();
-      const file = new (window as any).File([blob], 'vguard-consent.png', { type: 'image/png' });
+      // Decode data URI directly → avoids fetch() failures on large data URIs in mobile browsers
+      const commaIdx = docUri.indexOf(',');
+      const mimeType = docUri.slice(5, docUri.indexOf(';'));   // "data:" = 5 chars
+      const b64      = docUri.slice(commaIdx + 1);
+      const byteChars = atob(b64);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || 'image/png' });
+
+      const safeName = (snap.customerName || 'Customer').replace(/[^a-zA-Z0-9]/g, '_');
+      const phone    = snap.customerWhatsApp || 'consent';
+      const fileName = `${safeName}_${phone}_consent.png`;
+
+      const file = new (window as any).File([blob], fileName, { type: 'image/png' });
       if ((navigator as any).canShare?.({ files: [file] })) {
         await (navigator as any).share({
           title: 'V-Guard Trial Consent',
@@ -53,7 +64,7 @@ export default function SuccessScreen() {
         // Desktop fallback — trigger download
         const a = (document as any).createElement('a');
         a.href     = docUri;
-        a.download = 'vguard-consent.png';
+        a.download = fileName;
         a.click();
       }
     } catch { /* user cancelled share sheet — no action needed */ }
