@@ -270,20 +270,29 @@ export async function generateConsentDocument(params: ConsentDocParams): Promise
   ctx.fillRect(MX, y + 15, 100, 2);
   y += 22;
 
-  const SIG_BOX_H = 130;
-  // Box background
+  // Signature box: 58% of content width, centered
+  const SIG_BOX_W = Math.round(CW * 0.58);
+  const SIG_BOX_X = MX + Math.round((CW - SIG_BOX_W) / 2);
+  const SIG_BOX_H = 120;
+
   ctx.fillStyle = C.canvas;
-  ctx.fillRect(MX, y, CW, SIG_BOX_H);
-  // Box border
+  ctx.fillRect(SIG_BOX_X, y, SIG_BOX_W, SIG_BOX_H);
   ctx.strokeStyle = C.border;
   ctx.lineWidth   = 1.5;
-  ctx.strokeRect(MX + 0.75, y + 0.75, CW - 1.5, SIG_BOX_H - 1.5);
+  ctx.strokeRect(SIG_BOX_X + 0.75, y + 0.75, SIG_BOX_W - 1.5, SIG_BOX_H - 1.5);
+
+  // Subtle label inside box bottom
+  setFont(ctx, 9);
+  ctx.fillStyle = C.border;
+  ctx.textAlign = 'center';
+  ctx.fillText('Customer Signature', SIG_BOX_X + SIG_BOX_W / 2, y + SIG_BOX_H - 14);
+  ctx.textAlign = 'left';
 
   if (signatureDataUri) {
     await new Promise<void>((resolve) => {
       const img = new (window as any).Image() as HTMLImageElement;
       img.onload  = () => {
-        ctx.drawImage(img, MX + 8, y + 8, CW - 16, SIG_BOX_H - 16);
+        ctx.drawImage(img, SIG_BOX_X + 8, y + 8, SIG_BOX_W - 16, SIG_BOX_H - 26);
         resolve();
       };
       img.onerror = () => resolve();
@@ -293,7 +302,7 @@ export async function generateConsentDocument(params: ConsentDocParams): Promise
     setFont(ctx, 11);
     ctx.fillStyle = C.border;
     ctx.textAlign = 'center';
-    ctx.fillText('No signature captured', W / 2, y + SIG_BOX_H / 2 - 6);
+    ctx.fillText('No signature captured', SIG_BOX_X + SIG_BOX_W / 2, y + SIG_BOX_H / 2 - 6);
     ctx.textAlign = 'left';
   }
 

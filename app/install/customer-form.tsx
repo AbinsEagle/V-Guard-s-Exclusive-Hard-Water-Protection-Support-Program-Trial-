@@ -477,9 +477,13 @@ const styles = StyleSheet.create({
   inputErr: { borderColor: colors.error },
   prefix: { marginRight: spacing.xs },
   prefixDiv: { width: 1, height: 20, backgroundColor: colors.border, marginRight: spacing.sm },
-  input: { flex: 1, fontSize: 16, color: colors.textPrimary, paddingVertical: spacing.sm },
+  input: {
+    flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: spacing.sm,
+    // suppress browser default focus ring on web
+    ...(Platform.OS === 'web' ? { outline: 'none' } as any : {}),
+  },
   multilineInput: { minHeight: 72, paddingTop: spacing.sm },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs + 2 },
   rowFields: { flexDirection: 'row', gap: spacing.sm },
   halfField: { flex: 1, minWidth: 0 },
   scaleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
@@ -517,7 +521,7 @@ const fieldStyles = StyleSheet.create({
 
 const chipStyles = StyleSheet.create({
   chip: {
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm - 2,
+    paddingHorizontal: spacing.sm + 2, paddingVertical: 7,
     borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
   },
   selected: { borderColor: colors.primary, backgroundColor: colors.primaryFaint },
