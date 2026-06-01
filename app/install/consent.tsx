@@ -15,6 +15,7 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
+import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
 const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
 
@@ -40,6 +41,7 @@ export default function ConsentScreen() {
   const [pincode,      setPincode]      = useState(data.pincode || '');
   const [hasSignature, setHasSignature] = useState(false);
   const [confirmed,    setConfirmed]    = useState(data.consentGiven || false);
+  const [generating,   setGenerating]   = useState(false);
   const [errors,       setErrors]       = useState({
     customerName: '', whatsApp: '', pincode: '', signature: '', confirmed: '',
   });
@@ -131,16 +133,28 @@ export default function ConsentScreen() {
     return Object.values(e).every((v) => !v);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!validate()) return;
-    const signatureUri = canvasRef.current?.toDataURL('image/png') ?? null;
+    setGenerating(true);
+    const rawSig  = canvasRef.current?.toDataURL('image/png') ?? null;
+    const timestamp = new Date().toISOString();
+    const docUri  = await generateConsentDocument({
+      customerName:     customerName.trim(),
+      whatsApp:         whatsApp.trim(),
+      pincode:          pincode.trim(),
+      timestamp,
+      signatureDataUri: rawSig,
+      heaterSerial:     data.heaterSerialNumber || undefined,
+      cartridgeNumber:  data.cartridgeNumber    || undefined,
+    });
+    setGenerating(false);
     update({
       customerName:        customerName.trim(),
       customerWhatsApp:    whatsApp.trim(),
       pincode:             pincode.trim(),
-      consentSignatureUri: signatureUri,
+      consentSignatureUri: docUri || rawSig,
       consentGiven:        true,
-      consentTimestamp:    new Date().toISOString(),
+      consentTimestamp:    timestamp,
     });
     router.push('/install/customer-form');
   };
@@ -357,11 +371,20 @@ export default function ConsentScreen() {
           </AppText>
 
           {/* CTA */}
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-            <AppText variant="label" color={colors.headerBg}>Proceed to Customer Details</AppText>
-            <View style={styles.btnArrow}>
-              <Ionicons name="arrow-forward" size={16} color={colors.white} />
-            </View>
+          <TouchableOpacity
+            style={[styles.primaryBtn, generating && { opacity: 0.7 }]}
+            onPress={handleContinue}
+            disabled={generating}
+            activeOpacity={0.85}
+          >
+            <AppText variant="label" color={colors.headerBg}>
+              {generating ? 'Generating document…' : 'Proceed to Customer Details'}
+            </AppText>
+            {!generating && (
+              <View style={styles.btnArrow}>
+                <Ionicons name="arrow-forward" size={16} color={colors.white} />
+              </View>
+            )}
           </TouchableOpacity>
 
         </ScrollView>

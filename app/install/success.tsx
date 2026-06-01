@@ -12,11 +12,12 @@ export default function SuccessScreen() {
 
   // Snapshot before reset so the card still has data to display
   const snap = useRef({
-    customerName:    data.customerName,
-    customerWhatsApp: data.customerWhatsApp,
-    heaterModel:     data.heaterModel || data.heaterSerialNumber,
-    cartridgeNumber: data.cartridgeNumber,
-    installationDate: data.installationDate,
+    customerName:        data.customerName,
+    customerWhatsApp:    data.customerWhatsApp,
+    heaterModel:         data.heaterModel || data.heaterSerialNumber,
+    cartridgeNumber:     data.cartridgeNumber,
+    installationDate:    data.installationDate,
+    consentSignatureUri: data.consentSignatureUri,
   }).current;
 
   useEffect(() => {
@@ -33,6 +34,29 @@ export default function SuccessScreen() {
 
   const handleNewInstallation = () => {
     router.replace('/');
+  };
+
+  const handleShareConsent = async () => {
+    const docUri = snap.consentSignatureUri;
+    if (!docUri) return;
+    try {
+      const res  = await fetch(docUri);
+      const blob = await res.blob();
+      const file = new (window as any).File([blob], 'vguard-consent.png', { type: 'image/png' });
+      if ((navigator as any).canShare?.({ files: [file] })) {
+        await (navigator as any).share({
+          title: 'V-Guard Trial Consent',
+          text:  'Customer consent document for V-Guard Hard Water Protection Trial',
+          files: [file],
+        });
+      } else {
+        // Desktop fallback — trigger download
+        const a = (document as any).createElement('a');
+        a.href     = docUri;
+        a.download = 'vguard-consent.png';
+        a.click();
+      }
+    } catch { /* user cancelled share sheet — no action needed */ }
   };
 
   return (
@@ -82,6 +106,15 @@ export default function SuccessScreen() {
         </View>
 
         {/* ── Actions ── */}
+        {snap.consentSignatureUri ? (
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShareConsent} activeOpacity={0.8}>
+            <Ionicons name="share-outline" size={18} color={colors.primary} />
+            <AppText variant="label" color={colors.primary} style={{ marginLeft: spacing.sm }}>
+              Share Consent with Customer
+            </AppText>
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity style={styles.primaryBtn} onPress={handleNewInstallation}>
           <Ionicons name="add-circle-outline" size={18} color={colors.headerBg} />
           <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
@@ -174,13 +207,19 @@ const styles = StyleSheet.create({
   nextTitle: { marginBottom: spacing.xs / 2 },
 
   // CTA
+  shareBtn: {
+    width: '100%',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: colors.primary,
+    borderRadius: radius.lg, paddingVertical: spacing.md,
+    marginTop: 'auto',
+  },
   primaryBtn: {
     width: '100%',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.primary,
     borderRadius: radius.lg, paddingVertical: spacing.md,
     ...shadows.md,
-    marginTop: 'auto',
   },
 
   footer: { textAlign: 'center', marginTop: spacing.xs },

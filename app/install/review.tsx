@@ -94,7 +94,7 @@ export default function ReviewScreen() {
               <img
                 src={data.consentSignatureUri}
                 style={{
-                  width: '100%', height: 80,
+                  width: '100%', height: 240,
                   objectFit: 'contain', borderRadius: 8,
                   backgroundColor: '#FAFAFA',
                   border: '1px solid rgba(60,60,67,0.18)',
