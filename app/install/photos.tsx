@@ -15,7 +15,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
 type PhotoSlot = 'front' | 'side' | 'scale';
 

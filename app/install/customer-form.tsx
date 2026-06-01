@@ -21,7 +21,7 @@ import {
   WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
 } from '../../src/types';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
 const WATER_SOURCES: { label: string; value: WaterSource }[] = [
   { label: 'Borewell',              value: 'Borewell' },
@@ -68,7 +68,6 @@ const USAGE_OPTIONS: { label: string; value: UsagePattern }[] = [
 const SCALE_RATINGS = ['0', '1', '2', '3', '4', '5'];
 
 interface Errors {
-  customerName: string; customerWhatsApp: string; pincode: string;
   waterSource: string; waterHardnessEstimate: string; existingScaleVisualRating: string; waterQualityFeel: string;
   heaterModel: string; heaterCapacity: string; heaterWattage: string; heaterAgeYears: string; hotWaterTemperatureSetting: string;
   peoplePerDay: string; bathsPerDay: string; heaterUsagePattern: string;
@@ -79,9 +78,6 @@ export default function CustomerFormScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const isSmall = screenWidth < 380; // e.g. iPhone SE, older Android
 
-  const [customerName,    setCustomerName]    = useState(data.customerName);
-  const [whatsApp,        setWhatsApp]        = useState(data.customerWhatsApp);
-  const [pincode,         setPincode]         = useState(data.pincode);
   const [waterSource,     setWaterSource]     = useState<WaterSource | ''>(data.waterSource);
   const [waterHardness,   setWaterHardness]   = useState<WaterHardness | ''>(data.waterHardnessEstimate);
   const [waterFeel,       setWaterFeel]       = useState(data.waterQualityFeel);
@@ -101,7 +97,6 @@ export default function CustomerFormScreen() {
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
   const [gpsLabel,  setGpsLabel]  = useState('');
   const [errors,    setErrors]    = useState<Errors>({
-    customerName: '', customerWhatsApp: '', pincode: '',
     waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
     heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
     peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
@@ -133,16 +128,10 @@ export default function CustomerFormScreen() {
 
   const validate = (): boolean => {
     const e: Errors = {
-      customerName: '', customerWhatsApp: '', pincode: '',
       waterSource: '', waterHardnessEstimate: '', existingScaleVisualRating: '', waterQualityFeel: '',
       heaterModel: '', heaterCapacity: '', heaterWattage: '', heaterAgeYears: '', hotWaterTemperatureSetting: '',
       peoplePerDay: '', bathsPerDay: '', heaterUsagePattern: '',
     };
-    if (!customerName.trim()) e.customerName = 'Required';
-    if (!whatsApp.trim()) e.customerWhatsApp = 'Required';
-    else if (!/^[6-9]\d{9}$/.test(whatsApp.trim())) e.customerWhatsApp = 'Enter a valid 10-digit number';
-    if (!pincode.trim()) e.pincode = 'Required';
-    else if (!/^\d{6}$/.test(pincode.trim())) e.pincode = 'Enter a valid 6-digit pincode';
     if (!waterSource) e.waterSource = 'Please select water source';
     if (!waterHardness) e.waterHardnessEstimate = 'Please select TDS range';
     if (scaleRating === '') e.existingScaleVisualRating = 'Please rate the scale condition (0–5)';
@@ -161,9 +150,6 @@ export default function CustomerFormScreen() {
   const handleContinue = () => {
     if (!validate()) return;
     update({
-      customerName:              customerName.trim(),
-      customerWhatsApp:          whatsApp.trim(),
-      pincode:                   pincode.trim(),
       waterSource:               waterSource as WaterSource,
       waterHardnessEstimate:     waterHardness as WaterHardness,
       waterQualityFeel:          waterFeel.trim(),
@@ -186,7 +172,7 @@ export default function CustomerFormScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.white} />
         </TouchableOpacity>
-        <AppText variant="h3" color={colors.white}>Customer Details</AppText>
+        <AppText variant="h3" color={colors.white}>Product &amp; Usage</AppText>
         <View style={{ width: 38 }} />
       </View>
 
@@ -227,44 +213,6 @@ export default function CustomerFormScreen() {
               </AppText>
             </TouchableOpacity>
           </View>
-
-          {/* ── Customer ── */}
-          <SectionHeader title="Customer" icon="person" />
-
-          <Field label="Name" required error={errors.customerName}>
-            <View style={[styles.inputBox, errors.customerName ? styles.inputErr : null]}>
-              <TextInput
-                style={styles.input} placeholder="Full name"
-                placeholderTextColor={colors.textHint} value={customerName}
-                onChangeText={(t) => { setCustomerName(t); setErrors((e) => ({ ...e, customerName: '' })); }}
-                autoCapitalize="words"
-              />
-            </View>
-          </Field>
-
-          <Field label="WhatsApp Number" required error={errors.customerWhatsApp}>
-            <View style={[styles.inputBox, errors.customerWhatsApp ? styles.inputErr : null]}>
-              <AppText variant="body" color={colors.textSecondary} style={styles.prefix}>+91</AppText>
-              <View style={styles.prefixDiv} />
-              <TextInput
-                style={styles.input} placeholder="10-digit number"
-                placeholderTextColor={colors.textHint} value={whatsApp}
-                onChangeText={(t) => { setWhatsApp(t.replace(/\D/g, '').slice(0, 10)); setErrors((e) => ({ ...e, customerWhatsApp: '' })); }}
-                keyboardType="number-pad" maxLength={10}
-              />
-            </View>
-          </Field>
-
-          <Field label="Pincode" required error={errors.pincode}>
-            <View style={[styles.inputBox, errors.pincode ? styles.inputErr : null]}>
-              <TextInput
-                style={styles.input} placeholder="6-digit pincode"
-                placeholderTextColor={colors.textHint} value={pincode}
-                onChangeText={(t) => { setPincode(t.replace(/\D/g, '').slice(0, 6)); setErrors((e) => ({ ...e, pincode: '' })); }}
-                keyboardType="number-pad" maxLength={6}
-              />
-            </View>
-          </Field>
 
           {/* ── Water Quality ── */}
           <SectionHeader title="Water Quality" icon="water" />

@@ -16,7 +16,7 @@ import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
 import { submitInstallation } from '../../src/services/submission';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
@@ -113,7 +113,7 @@ export default function ReviewScreen() {
         </Section>
 
         {/* Customer */}
-        <Section title="Customer Details" icon="home" onEdit={() => goTo('/install/customer-form')}>
+        <Section title="Water Quality" icon="water" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Name" value={data.customerName} />
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />

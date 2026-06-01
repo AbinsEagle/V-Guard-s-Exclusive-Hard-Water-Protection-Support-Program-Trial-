@@ -17,7 +17,7 @@ import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
 import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
 const CANVAS_W = 600;
 const CANVAS_H = 160;

@@ -18,7 +18,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
 
-export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
+export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
 
 // ─── Web barcode scanner ──────────────────────────────────────────────────────
 // Works on ALL browsers: iOS Safari, Brave, Firefox, Chrome.
