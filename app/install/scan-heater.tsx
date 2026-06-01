@@ -18,7 +18,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
 
-export const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
 
 // ─── Web barcode scanner ──────────────────────────────────────────────────────
 // Works on ALL browsers: iOS Safari, Brave, Firefox, Chrome.
@@ -322,7 +322,7 @@ export default function UnitRegistrationScreen() {
       cartridgeNumber:      cartridgeNum.trim() ? 'VG-' + cartridgeNum.trim() : '',
       waterSampleCollected: sampleCollected,
     });
-    router.push('/install/customer-form');
+    router.push('/install/consent');
   };
 
   // ── Camera overlay ──────────────────────────────────────────────────────────
@@ -354,7 +354,7 @@ export default function UnitRegistrationScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={2} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={2} totalSteps={6} labels={STEP_LABELS} />
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -462,7 +462,7 @@ export default function UnitRegistrationScreen() {
 
           {/* ── CTA ── */}
           <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-            <AppText variant="label" color={colors.headerBg}>Continue to Customer Details</AppText>
+            <AppText variant="label" color={colors.headerBg}>Proceed to Customer Consent</AppText>
             <View style={styles.btnArrow}>
               <Ionicons name="arrow-forward" size={16} color={colors.white} />
             </View>

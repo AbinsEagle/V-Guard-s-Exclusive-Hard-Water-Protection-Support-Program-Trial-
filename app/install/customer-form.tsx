@@ -21,7 +21,7 @@ import {
   WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
 } from '../../src/types';
 
-const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
 
 const WATER_SOURCES: { label: string; value: WaterSource }[] = [
   { label: 'Borewell',              value: 'Borewell' },
@@ -190,7 +190,7 @@ export default function CustomerFormScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={3} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={4} totalSteps={6} labels={STEP_LABELS} />
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView

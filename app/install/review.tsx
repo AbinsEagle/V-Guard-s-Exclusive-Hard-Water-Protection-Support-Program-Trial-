@@ -16,7 +16,7 @@ import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing } from '../../src/theme';
 import { submitInstallation } from '../../src/services/submission';
 
-const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const { data } = useInstallation();
@@ -55,7 +55,7 @@ export default function ReviewScreen() {
         </TouchableOpacity>
       </View>
 
-      <StepIndicator currentStep={5} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={6} totalSteps={6} labels={STEP_LABELS} />
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
@@ -68,6 +68,42 @@ export default function ReviewScreen() {
           <Row label="Heater Serial No." value={data.heaterSerialNumber} />
           <Row label="Cartridge No." value={data.cartridgeNumber} />
           <Row label="Sample Collected" value={data.waterSampleCollected ? 'Yes' : 'No'} />
+        </Section>
+
+        {/* Consent */}
+        <Section title="Customer Consent" icon="shield-checkmark" onEdit={() => goTo('/install/consent')}>
+          <Row label="Customer Name" value={data.customerName} />
+          <Row label="WhatsApp" value={data.customerWhatsApp ? `+91 ${data.customerWhatsApp}` : '—'} />
+          <Row label="Pincode" value={data.pincode} />
+          <Row label="Consent Given" value={data.consentGiven ? 'Yes' : 'No'} />
+          {data.consentTimestamp ? (
+            <Row
+              label="Signed At"
+              value={new Date(data.consentTimestamp).toLocaleString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+            />
+          ) : null}
+          {data.consentSignatureUri ? (
+            <View style={styles.signatureThumbWrapper}>
+              <AppText variant="caption" color={colors.textSecondary} style={{ marginBottom: spacing.xs }}>
+                Signature
+              </AppText>
+              {/* @ts-ignore — HTML img element on web */}
+              <img
+                src={data.consentSignatureUri}
+                style={{
+                  width: '100%', height: 80,
+                  objectFit: 'contain', borderRadius: 8,
+                  backgroundColor: '#FAFAFA',
+                  border: '1px solid rgba(60,60,67,0.18)',
+                  display: 'block',
+                } as any}
+                alt="Customer signature"
+              />
+            </View>
+          ) : null}
         </Section>
 
         {/* Technician */}
@@ -224,6 +260,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm,
   },
   editHint: { textAlign: 'center', marginBottom: spacing.xs },
+  signatureThumbWrapper: { marginTop: spacing.xs },
   photosRow: { flexDirection: 'row', gap: spacing.md },
   submitBtn: {
     flexDirection: 'row', backgroundColor: colors.success,

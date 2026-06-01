@@ -27,6 +27,11 @@ export interface InstallationData {
   cartridgeBatchCode: string;
   waterSampleCollected: boolean;
 
+  // Step 3 — Consent
+  consentSignatureUri: string | null;
+  consentGiven: boolean;
+  consentTimestamp: string;
+
   // Step 3 — Customer details
   customerName: string;
   customerWhatsApp: string;
@@ -91,6 +96,9 @@ export const EMPTY_INSTALLATION: InstallationData = {
   frontPhotoUri: null,
   sidePhotoUri: null,
   scalePhotoUri: null,
+  consentSignatureUri: null,
+  consentGiven: false,
+  consentTimestamp: '',
 };
 
 // ─── Survey ───────────────────────────────────────────────────────────────────

@@ -15,7 +15,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { colors, spacing, radius, shadows } from '../../src/theme';
 
-const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Customer', 'Photos', 'Review'];
 
 type PhotoSlot = 'front' | 'side' | 'scale';
 
@@ -124,7 +124,7 @@ export default function PhotosScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={4} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={5} totalSteps={6} labels={STEP_LABELS} />
 
       <ScrollView
         style={styles.scrollArea}
