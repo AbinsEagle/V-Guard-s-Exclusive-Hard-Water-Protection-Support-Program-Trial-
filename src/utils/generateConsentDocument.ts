@@ -12,9 +12,10 @@ interface ConsentDocParams {
   cartridgeNumber?: string;
 }
 
+const SCALE = 2;                     // render at 2× for crisp output on high-DPI screens
 const W  = 794;
 const H  = 1200;
-const MX = 40;                       // horizontal margin
+const MX = 40;                       // horizontal margin (logical pixels)
 const CW = W - MX * 2;              // content width = 714
 
 // ─── Colors (hardcoded — no theme import so this works outside React) ─────────
@@ -100,10 +101,11 @@ export async function generateConsentDocument(params: ConsentDocParams): Promise
   })();
 
   const canvas = (document as any).createElement('canvas') as HTMLCanvasElement;
-  canvas.width  = W;
-  canvas.height = H;
+  canvas.width  = W * SCALE;
+  canvas.height = H * SCALE;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
+  ctx.scale(SCALE, SCALE);
 
   ctx.textBaseline = 'top';
 
