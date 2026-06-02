@@ -4,10 +4,12 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
@@ -85,9 +87,12 @@ export default function PhotosScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   const openCamera = async (slot: PhotoSlot) => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) return;
+    // On web the browser handles the permission prompt inside getUserMedia
+    if (Platform.OS !== 'web') {
+      if (!permission?.granted) {
+        const result = await requestPermission();
+        if (!result.granted) return;
+      }
     }
     setActiveSlot(slot);
   };
@@ -117,37 +122,54 @@ export default function PhotosScreen() {
   const requiredCaptured = !!(photos.front && photos.side && photos.scale);
 
   // ── Full-screen camera ──
-  if (activeSlot && permission?.granted) {
-    return (
-      <View style={cameraStyles.cameraScreen}>
-        <CameraView ref={cameraRef} style={cameraStyles.camera} facing="back" type={"back" as any}>
-          <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
-            <View style={cameraStyles.cameraHeader}>
-              <TouchableOpacity onPress={() => setActiveSlot(null)} style={cameraStyles.cameraBack}>
-                <Ionicons name="close" size={26} color="#FFFFFF" />
-              </TouchableOpacity>
-              <View style={cameraStyles.cameraBadge}>
-                <Ionicons name="camera" size={13} color="#FFFFFF" />
-                <AppText variant="label" color="#FFFFFF" style={{ marginLeft: 6 }}>
-                  {CAMERA_LABELS[activeSlot]}
+  if (activeSlot) {
+    // Web: use native getUserMedia + <video> element — expo-camera is unreliable on web browsers
+    if (Platform.OS === 'web') {
+      return (
+        <WebCamera
+          slot={activeSlot}
+          onCapture={(uri) => {
+            setPhotos((prev) => ({ ...prev, [activeSlot!]: uri }));
+            setActiveSlot(null);
+          }}
+          onClose={() => setActiveSlot(null)}
+        />
+      );
+    }
+
+    // Native: expo-camera CameraView
+    if (permission?.granted) {
+      return (
+        <View style={cameraStyles.cameraScreen}>
+          <CameraView ref={cameraRef} style={cameraStyles.camera} facing="back" type={"back" as any}>
+            <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+              <View style={cameraStyles.cameraHeader}>
+                <TouchableOpacity onPress={() => setActiveSlot(null)} style={cameraStyles.cameraBack}>
+                  <Ionicons name="close" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={cameraStyles.cameraBadge}>
+                  <Ionicons name="camera" size={13} color="#FFFFFF" />
+                  <AppText variant="label" color="#FFFFFF" style={{ marginLeft: 6 }}>
+                    {CAMERA_LABELS[activeSlot]}
+                  </AppText>
+                </View>
+                <View style={{ width: 40 }} />
+              </View>
+              <View style={cameraStyles.cameraGuide}>
+                <AppText variant="caption" color="#FFFFFF" style={cameraStyles.cameraGuideText}>
+                  {CAMERA_GUIDES[activeSlot]}
                 </AppText>
               </View>
-              <View style={{ width: 40 }} />
-            </View>
-            <View style={cameraStyles.cameraGuide}>
-              <AppText variant="caption" color="#FFFFFF" style={cameraStyles.cameraGuideText}>
-                {CAMERA_GUIDES[activeSlot]}
-              </AppText>
-            </View>
-            <View style={cameraStyles.cameraControls}>
-              <TouchableOpacity style={cameraStyles.captureBtn} onPress={takePhoto}>
-                <View style={cameraStyles.captureBtnInner} />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </CameraView>
-      </View>
-    );
+              <View style={cameraStyles.cameraControls}>
+                <TouchableOpacity style={cameraStyles.captureBtn} onPress={takePhoto}>
+                  <View style={cameraStyles.captureBtnInner} />
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </CameraView>
+        </View>
+      );
+    }
   }
 
   return (
@@ -230,6 +252,136 @@ export default function PhotosScreen() {
 
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// ─── Web Camera (getUserMedia) ────────────────────────────────────────────────
+// expo-camera's CameraView is unreliable on web — video stream doesn't attach
+// consistently. This component uses raw browser APIs to guarantee a live preview.
+
+function WebCamera({ slot, onCapture, onClose }: {
+  slot: PhotoSlot;
+  onCapture: (uri: string) => void;
+  onClose: () => void;
+}) {
+  const videoRef  = useRef<any>(null);
+  const streamRef = useRef<any>(null);
+  const [status, setStatus] = useState<'starting' | 'ready' | 'error'>('starting');
+  const [errMsg,  setErrMsg]  = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      let stream: any;
+      try {
+        stream = await (navigator as any).mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
+      } catch {
+        if (!cancelled) {
+          setStatus('error');
+          setErrMsg('Camera access denied. Allow camera permission in your browser and try again.');
+        }
+        return;
+      }
+      if (cancelled) { stream.getTracks().forEach((t: any) => t.stop()); return; }
+      streamRef.current = stream;
+
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        // Wait for stream to actually start playing before showing the UI
+        await new Promise<void>((resolve) => {
+          if (video.readyState >= 3) { resolve(); return; }
+          video.oncanplay = () => resolve();
+        });
+      }
+      if (cancelled) return;
+      setStatus('ready');
+    })();
+
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t: any) => t.stop());
+    };
+  }, []);
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
+    const canvas = (document as any).createElement('canvas');
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    onCapture(canvas.toDataURL('image/jpeg', 0.85));
+  };
+
+  return (
+    <View style={cameraStyles.cameraScreen}>
+      {/* @ts-ignore — valid HTML element on web */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' } as any}
+      />
+      <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+        <View style={cameraStyles.cameraHeader}>
+          <TouchableOpacity onPress={onClose} style={cameraStyles.cameraBack}>
+            <Ionicons name="close" size={26} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={cameraStyles.cameraBadge}>
+            <Ionicons name="camera" size={13} color="#FFFFFF" />
+            <AppText variant="label" color="#FFFFFF" style={{ marginLeft: 6 }}>
+              {CAMERA_LABELS[slot]}
+            </AppText>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <View style={cameraStyles.cameraGuide}>
+          {status === 'starting' && (
+            <>
+              <ActivityIndicator color="#FFFFFF" size="large" />
+              <AppText variant="caption" color="#FFFFFF" style={{ marginTop: 10 }}>
+                Starting camera…
+              </AppText>
+            </>
+          )}
+          {status === 'error' && (
+            <>
+              <Ionicons name="camera-outline" size={36} color="#FF3B30" />
+              <AppText variant="caption" color="#FFFFFF" style={{ marginTop: 10, textAlign: 'center' }}>
+                {errMsg}
+              </AppText>
+            </>
+          )}
+          {status === 'ready' && (
+            <AppText variant="caption" color="#FFFFFF" style={cameraStyles.cameraGuideText}>
+              {CAMERA_GUIDES[slot]}
+            </AppText>
+          )}
+        </View>
+
+        <View style={cameraStyles.cameraControls}>
+          <TouchableOpacity
+            style={[cameraStyles.captureBtn, status !== 'ready' && { opacity: 0.35 }]}
+            onPress={handleCapture}
+            disabled={status !== 'ready'}
+          >
+            <View style={cameraStyles.captureBtnInner} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
