@@ -138,12 +138,13 @@ export default function ConsentScreen() {
     });
     setGenerating(false);
     update({
-      customerName:        customerName.trim(),
-      customerWhatsApp:    whatsApp.trim(),
-      pincode:             pincode.trim(),
-      consentSignatureUri: docUri || rawSig,
-      consentGiven:        true,
-      consentTimestamp:    timestamp,
+      customerName:           customerName.trim(),
+      customerWhatsApp:       whatsApp.trim(),
+      pincode:                pincode.trim(),
+      consentSignatureUri:    docUri || rawSig,
+      consentRawSignatureUri: rawSig,         // preserved so scan-heater can regenerate with heater/cartridge data
+      consentGiven:           true,
+      consentTimestamp:       timestamp,
     });
     router.push('/install/scan-heater');
   };

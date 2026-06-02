@@ -17,6 +17,7 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { useColors, spacing, radius, shadows } from '../../src/theme';
+import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
 export const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
@@ -287,6 +288,7 @@ export default function UnitRegistrationScreen() {
   const [scanOpen,        setScanOpen]        = useState(false);
   const [heaterScanned,   setHeaterScanned]   = useState(false);
   const [errors,          setErrors]          = useState({ heater: '', cartridge: '', sample: '' });
+  const [generating,      setGenerating]      = useState(false);
 
   // Native-only state
   const [cameraKey,   setCameraKey]   = useState(0);
@@ -318,7 +320,7 @@ export default function UnitRegistrationScreen() {
 
   const handleNativeScan = ({ data: code }: { data: string }) => handleScan(code);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const e = { heater: '', cartridge: '', sample: '' };
     if (!heaterSerial.trim())  e.heater    = 'Heater serial number is required';
     if (!cartridgeNum.trim())  e.cartridge = 'Cartridge number is required';
@@ -326,11 +328,32 @@ export default function UnitRegistrationScreen() {
     setErrors(e);
     if (e.heater || e.cartridge || e.sample) return;
 
+    const newSerial    = heaterSerial.trim();
+    const newCartridge = cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim() : '';
+
     update({
-      heaterSerialNumber:   heaterSerial.trim(),
-      cartridgeNumber:      cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim() : '',
+      heaterSerialNumber:   newSerial,
+      cartridgeNumber:      newCartridge,
       waterSampleCollected: sampleCollected,
     });
+
+    // Regenerate the consent document now that heater/cartridge are known.
+    // Consent is captured before this step, so the initial document has blank fields.
+    if (data.consentRawSignatureUri && data.consentGiven) {
+      setGenerating(true);
+      const docUri = await generateConsentDocument({
+        customerName:     data.customerName,
+        whatsApp:         data.customerWhatsApp,
+        pincode:          data.pincode,
+        timestamp:        data.consentTimestamp,
+        signatureDataUri: data.consentRawSignatureUri,
+        heaterSerial:     newSerial,
+        cartridgeNumber:  newCartridge,
+      });
+      if (docUri) update({ consentSignatureUri: docUri });
+      setGenerating(false);
+    }
+
     router.push('/install/customer-form');
   };
 
@@ -470,11 +493,26 @@ export default function UnitRegistrationScreen() {
           ) : null}
 
           {/* ── CTA ── */}
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleContinue}>
-            <AppText variant="label" color={colors.headerBg}>Proceed to Customer Consent</AppText>
-            <View style={styles.btnArrow}>
-              <Ionicons name="arrow-forward" size={16} color={colors.white} />
-            </View>
+          <TouchableOpacity
+            style={[styles.primaryBtn, generating && { opacity: 0.6 }]}
+            onPress={handleContinue}
+            disabled={generating}
+          >
+            {generating ? (
+              <>
+                <ActivityIndicator color={colors.headerBg} size="small" />
+                <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
+                  Preparing consent…
+                </AppText>
+              </>
+            ) : (
+              <>
+                <AppText variant="label" color={colors.headerBg}>Continue</AppText>
+                <View style={styles.btnArrow}>
+                  <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                </View>
+              </>
+            )}
           </TouchableOpacity>
 
         </ScrollView>
