@@ -16,7 +16,7 @@ import { useInstallation } from '../../src/store/installationStore';
 import { useColors, spacing } from '../../src/theme';
 import { submitInstallation } from '../../src/services/submission';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
   const colors = useColors();

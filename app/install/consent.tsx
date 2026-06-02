@@ -17,7 +17,7 @@ import { useInstallation } from '../../src/store/installationStore';
 import { useColors, spacing, radius, shadows } from '../../src/theme';
 import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 const CANVAS_W = 600;
 const CANVAS_H = 160;
@@ -145,7 +145,7 @@ export default function ConsentScreen() {
       consentGiven:        true,
       consentTimestamp:    timestamp,
     });
-    router.push('/install/customer-form');
+    router.push('/install/scan-heater');
   };
 
   return (
@@ -158,7 +158,7 @@ export default function ConsentScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={3} totalSteps={6} labels={STEP_LABELS} />
+      <StepIndicator currentStep={2} totalSteps={6} labels={STEP_LABELS} />
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView

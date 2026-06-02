@@ -18,7 +18,7 @@ import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { useColors, spacing, radius, shadows } from '../../src/theme';
 
-export const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
+export const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 // ─── Web barcode scanner ──────────────────────────────────────────────────────
 // Works on ALL browsers: iOS Safari, Brave, Firefox, Chrome.
@@ -331,7 +331,7 @@ export default function UnitRegistrationScreen() {
       cartridgeNumber:      cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim() : '',
       waterSampleCollected: sampleCollected,
     });
-    router.push('/install/consent');
+    router.push('/install/customer-form');
   };
 
   // ── Camera overlay ──────────────────────────────────────────────────────────
@@ -363,7 +363,7 @@ export default function UnitRegistrationScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={2} totalSteps={6} labels={STEP_LABELS} />
+      <StepIndicator currentStep={3} totalSteps={6} labels={STEP_LABELS} />
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView

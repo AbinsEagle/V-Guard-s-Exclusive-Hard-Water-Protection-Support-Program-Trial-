@@ -21,7 +21,7 @@ import {
   WaterSource, WaterHardness, TempSetting, UsagePattern, ScaleRating,
 } from '../../src/types';
 
-const STEP_LABELS = ['Technician', 'Units', 'Consent', 'Product', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 const WATER_SOURCES: { label: string; value: WaterSource }[] = [
   { label: 'Borewell',              value: 'Borewell' },

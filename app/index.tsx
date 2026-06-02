@@ -47,7 +47,7 @@ export default function EntryScreen() {
   const handleStart = () => {
     if (!validate()) return;
     update({ technicianName: name.trim(), technicianPhone: phone.trim() });
-    router.push('/install/scan-heater');
+    router.push('/install/consent');
   };
 
   return (
