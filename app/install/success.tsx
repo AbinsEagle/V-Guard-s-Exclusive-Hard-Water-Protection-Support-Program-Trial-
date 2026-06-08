@@ -1,22 +1,25 @@
-import { View, StyleSheet, TouchableOpacity, BackHandler } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, BackHandler, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing, radius, shadows } from '../../src/theme';
+import { useColors, spacing, radius, shadows } from '../../src/theme';
 
 export default function SuccessScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data, reset } = useInstallation();
 
   // Snapshot before reset so the card still has data to display
   const snap = useRef({
-    customerName:    data.customerName,
-    customerWhatsApp: data.customerWhatsApp,
-    heaterModel:     data.heaterModel || data.heaterSerialNumber,
-    cartridgeNumber: data.cartridgeNumber,
-    installationDate: data.installationDate,
+    customerName:        data.customerName,
+    customerWhatsApp:    data.customerWhatsApp,
+    heaterModel:         data.heaterModel || data.heaterSerialNumber,
+    cartridgeNumber:     data.cartridgeNumber,
+    installationDate:    data.installationDate,
+    consentSignatureUri: data.consentSignatureUri,
   }).current;
 
   useEffect(() => {
@@ -35,14 +38,50 @@ export default function SuccessScreen() {
     router.replace('/');
   };
 
+  const handleShareConsent = async () => {
+    const docUri = snap.consentSignatureUri;
+    if (!docUri) return;
+    try {
+      // Decode data URI directly → avoids fetch() failures on large data URIs in mobile browsers
+      const commaIdx = docUri.indexOf(',');
+      const mimeType = docUri.slice(5, docUri.indexOf(';'));   // "data:" = 5 chars
+      const b64      = docUri.slice(commaIdx + 1);
+      const byteChars = atob(b64);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || 'image/png' });
+
+      const safeName = (snap.customerName || 'Customer').replace(/[^a-zA-Z0-9]/g, '_');
+      const phone    = snap.customerWhatsApp || 'consent';
+      const fileName = `${safeName}_${phone}_consent.png`;
+
+      const file = new (window as any).File([blob], fileName, { type: 'image/png' });
+      if ((navigator as any).canShare?.({ files: [file] })) {
+        await (navigator as any).share({
+          title: 'V-Guard Trial Consent',
+          text:  'Customer consent document for V-Guard Hard Water Protection Trial',
+          files: [file],
+        });
+      } else {
+        // Desktop fallback — trigger download
+        const a = (document as any).createElement('a');
+        a.href     = docUri;
+        a.download = fileName;
+        a.click();
+      }
+    } catch { /* user cancelled share sheet — no action needed */ }
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.container}>
-
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Success icon ── */}
         <View style={styles.iconOuter}>
           <View style={styles.iconInner}>
-            <Ionicons name="checkmark" size={36} color={colors.white} />
+            <Ionicons name="checkmark" size={36} color="#FFFFFF" />
           </View>
         </View>
 
@@ -82,6 +121,15 @@ export default function SuccessScreen() {
         </View>
 
         {/* ── Actions ── */}
+        {snap.consentSignatureUri ? (
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShareConsent} activeOpacity={0.8}>
+            <Ionicons name="share-outline" size={18} color={colors.primary} />
+            <AppText variant="label" color={colors.primary} style={{ marginLeft: spacing.sm }}>
+              Share Consent with Customer
+            </AppText>
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity style={styles.primaryBtn} onPress={handleNewInstallation}>
           <Ionicons name="add-circle-outline" size={18} color={colors.headerBg} />
           <AppText variant="label" color={colors.headerBg} style={{ marginLeft: spacing.sm }}>
@@ -93,7 +141,7 @@ export default function SuccessScreen() {
           V-Guard R&D · Hard Water Protection Trial
         </AppText>
 
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -101,19 +149,21 @@ export default function SuccessScreen() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SummaryRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+  const colors = useColors();
   return (
     <View style={sumStyles.row}>
       <Ionicons name={icon as any} size={14} color={colors.primary} />
       <AppText variant="caption" color={colors.textSecondary} style={sumStyles.label}>{label}</AppText>
-      <AppText variant="label" numberOfLines={1} style={sumStyles.value}>{value || '—'}</AppText>
+      <AppText variant="label" color={colors.textPrimary} numberOfLines={1} style={sumStyles.value}>{value || '—'}</AppText>
     </View>
   );
 }
 
 function NextStep({ number, text }: { number: string; text: string }) {
+  const colors = useColors();
   return (
     <View style={nsStyles.row}>
-      <View style={nsStyles.circle}>
+      <View style={[nsStyles.circle, { backgroundColor: colors.primary }]}>
         <AppText variant="caption2" style={nsStyles.number}>{number}</AppText>
       </View>
       <AppText variant="caption" color={colors.textSecondary} style={nsStyles.text}>{text}</AppText>
@@ -123,68 +173,74 @@ function NextStep({ number, text }: { number: string; text: string }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe:      { flex: 1, backgroundColor: colors.background },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-  },
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    safe:      { flex: 1, backgroundColor: colors.background },
+    container: {
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.xl,
+      paddingBottom: spacing.xxl,
+      gap: spacing.md,
+    },
 
-  // Icon
-  iconOuter: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: colors.successLight,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  iconInner: {
-    width: 58, height: 58, borderRadius: 29,
-    backgroundColor: colors.success,
-    alignItems: 'center', justifyContent: 'center',
-  },
+    // Icon
+    iconOuter: {
+      width: 80, height: 80, borderRadius: 40,
+      backgroundColor: colors.successLight,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    iconInner: {
+      width: 58, height: 58, borderRadius: 29,
+      backgroundColor: colors.success,
+      alignItems: 'center', justifyContent: 'center',
+    },
 
-  // Message
-  messageBlock: { alignItems: 'center', gap: spacing.xs },
-  title:    { textAlign: 'center' },
-  subtitle: { textAlign: 'center', lineHeight: 20 },
+    // Message
+    messageBlock: { alignItems: 'center', gap: spacing.xs },
+    title:    { textAlign: 'center' },
+    subtitle: { textAlign: 'center', lineHeight: 20 },
 
-  // Summary
-  summaryCard: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.border,
-    gap: spacing.xs,
-    ...shadows.sm,
-  },
-  divider: { height: 0.5, backgroundColor: colors.borderOpaque },
+    // Summary
+    summaryCard: {
+      width: '100%',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg, padding: spacing.md,
+      borderWidth: 1, borderColor: colors.border,
+      gap: spacing.xs,
+      ...shadows.sm,
+    },
+    divider: { height: 0.5, backgroundColor: colors.borderOpaque },
 
-  // Next steps
-  nextCard: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg, padding: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1, borderColor: colors.border,
-    ...shadows.sm,
-  },
-  nextTitle: { marginBottom: spacing.xs / 2 },
+    // Next steps
+    nextCard: {
+      width: '100%',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg, padding: spacing.md,
+      gap: spacing.sm,
+      borderWidth: 1, borderColor: colors.border,
+      ...shadows.sm,
+    },
+    nextTitle: { marginBottom: spacing.xs / 2 },
 
-  // CTA
-  primaryBtn: {
-    width: '100%',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg, paddingVertical: spacing.md,
-    ...shadows.md,
-    marginTop: 'auto',
-  },
+    // CTA — marginTop: 'auto' removed so button is always in document flow
+    shareBtn: {
+      width: '100%',
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1.5, borderColor: colors.primary,
+      borderRadius: radius.lg, paddingVertical: spacing.md,
+    },
+    primaryBtn: {
+      width: '100%',
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: radius.lg, paddingVertical: spacing.md,
+      ...shadows.md,
+    },
 
-  footer: { textAlign: 'center', marginTop: spacing.xs },
-});
+    footer: { textAlign: 'center', marginTop: spacing.xs },
+  });
+}
 
 const sumStyles = StyleSheet.create({
   row:   { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
@@ -196,10 +252,9 @@ const nsStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   circle: {
     width: 20, height: 20, borderRadius: 10,
-    backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
     marginTop: 1, flexShrink: 0,
   },
-  number: { fontWeight: '800', color: colors.headerBg, fontSize: 10 },
+  number: { fontWeight: '800', color: '#1A1A1A', fontSize: 10 },
   text:   { flex: 1, lineHeight: 18 },
 });

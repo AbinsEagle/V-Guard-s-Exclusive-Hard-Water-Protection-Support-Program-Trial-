@@ -11,9 +11,10 @@ export interface SubmissionResult {
 }
 
 interface PhotoSet {
-  front:  string | null;
-  side:   string | null;
-  scale:  string | null;
+  front:   string | null;
+  side:    string | null;
+  scale:   string | null;
+  consent: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -21,6 +22,10 @@ interface PhotoSet {
 async function uriToBase64(uri: string | null): Promise<string | null> {
   if (!uri) return null;
   try {
+    // Fast path: canvas toDataURL returns "data:image/png;base64,<payload>" — strip prefix
+    const dataUriMatch = uri.match(/^data:[^;]+;base64,(.+)$/);
+    if (dataUriMatch) return dataUriMatch[1];
+
     if (Platform.OS === 'web') {
       // On web, photo URIs are blob URLs — fetch and convert to base64
       const res   = await fetch(uri);
@@ -46,6 +51,8 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     frontPhotoUri,
     sidePhotoUri,
     scalePhotoUri,
+    consentSignatureUri,
+    consentGiven,
     gpsLat,
     gpsLng,
     peoplePerDay,
@@ -69,6 +76,7 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
   //  • waterSampleCollected         → "Yes"/"No" string (readable in Excel)
   const installation = {
     ...rest,
+    consentGiven:         consentGiven ? 'Yes' : 'No',
     waterSampleCollected: waterSampleCollected ? 'Yes' : 'No',
     gpsLat:        gpsLat        ? parseFloat(gpsLat)           : null,
     gpsLng:        gpsLng        ? parseFloat(gpsLng)           : null,
@@ -100,9 +108,10 @@ export function buildPayload(data: InstallationData, photos: PhotoSet) {
     // Base64 photos — Power Automate decodes and uploads to:
     // {photosLibrary}/{photoFolder}/front.jpg  |  side.jpg  |  scale.jpg
     photos: {
-      front:  photos.front,
-      side:   photos.side,
-      scale:  photos.scale,
+      front:   photos.front,
+      side:    photos.side,
+      scale:   photos.scale,
+      consent: photos.consent,
     },
   };
 }
@@ -116,13 +125,14 @@ export async function submitInstallation(
   const isConfigured = webhookUrl && !webhookUrl.startsWith('REPLACE_');
 
   // Encode photos in parallel
-  const [front, side, scale] = await Promise.all([
+  const [front, side, scale, consent] = await Promise.all([
     uriToBase64(data.frontPhotoUri),
     uriToBase64(data.sidePhotoUri),
     uriToBase64(data.scalePhotoUri),
+    uriToBase64(data.consentSignatureUri),
   ]);
 
-  const payload = buildPayload(data, { front, side, scale });
+  const payload = buildPayload(data, { front, side, scale, consent });
 
   // Dev mode — webhook not yet configured
   if (!isConfigured) {
@@ -132,7 +142,7 @@ export async function submitInstallation(
       'Payload preview:',
       JSON.stringify(payload, (k, v) =>
         // Truncate base64 in logs so they're readable
-        (k === 'front' || k === 'side' || k === 'scale') && typeof v === 'string'
+        (k === 'front' || k === 'side' || k === 'scale' || k === 'consent') && typeof v === 'string'
           ? `[base64 ~${Math.round(v.length / 1024)}KB]`
           : v,
         2,
