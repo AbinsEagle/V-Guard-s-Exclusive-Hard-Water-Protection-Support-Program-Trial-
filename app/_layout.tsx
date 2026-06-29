@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { InstallationProvider } from '../src/store/installationStore';
+import { Analytics } from '@vercel/analytics/react';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,6 +30,7 @@ export default function RootLayout() {
         <Stack.Screen name="install/success" />
         <Stack.Screen name="+not-found" />
       </Stack>
+      <Analytics />
     </InstallationProvider>
   );
 }
