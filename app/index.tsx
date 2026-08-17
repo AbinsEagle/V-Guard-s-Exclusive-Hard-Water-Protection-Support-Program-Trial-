@@ -37,8 +37,8 @@ export default function EntryScreen() {
   const validate = () => {
     const e = { name: '', phone: '' };
     if (!name.trim()) e.name = 'Name is required';
-    if (phone.trim() && !/^[6-9]\d{9}$/.test(phone.trim()))
-      e.phone = 'Enter a valid 10-digit mobile number';
+    if (!phone.trim()) e.phone = 'Mobile number is required';
+    else if (!/^[6-9]\d{9}$/.test(phone.trim())) e.phone = 'Enter a valid 10-digit mobile number';
     setErrors(e);
     return !e.name && !e.phone;
   };
