@@ -119,13 +119,13 @@ export default function EntryScreen() {
 
             <View style={styles.rowDivider} />
 
-            {/* Phone (optional) */}
+            {/* Phone */}
             <View style={styles.formRow}>
               <View style={styles.fieldIcon}>
                 <Ionicons name="call-outline" size={16} color={colors.primaryDark} />
               </View>
               <View style={styles.fieldBody}>
-                <AppText variant="caption" style={styles.fieldLabel}>Mobile Number (optional)</AppText>
+                <AppText variant="caption" style={styles.fieldLabel}>Mobile Number</AppText>
                 <View style={styles.phoneRow}>
                   <AppText variant="body" color={colors.textSecondary}>+91  </AppText>
                   <TextInput
@@ -211,7 +211,7 @@ export default function EntryScreen() {
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function FieldError({ msg }: { msg: string }) {
   return (

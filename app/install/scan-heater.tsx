@@ -399,10 +399,10 @@ export default function UnitRegistrationScreen() {
               : null}
           </View>
 
-          {/* ── Cartridge (AS) number ── */}
+          {/* ── Cartridge number ── */}
           <View style={fieldStyles.wrapper}>
             <AppText variant="label" style={fieldStyles.label}>
-              Cartridge No. (AS) <AppText variant="label" color={colors.error}>*</AppText>
+              Cartridge No. <AppText variant="label" color={colors.error}>*</AppText>
             </AppText>
             <View style={[styles.inputBox, errors.cartridge ? styles.inputErr : null]}>
               <Ionicons name="cube-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
