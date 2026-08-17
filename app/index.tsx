@@ -36,9 +36,8 @@ export default function EntryScreen() {
 
   const validate = () => {
     const e = { name: '', phone: '' };
-    if (!name.trim())  e.name  = 'Name is required';
-    if (!phone.trim()) e.phone = 'Phone number is required';
-    else if (!/^[6-9]\d{9}$/.test(phone.trim()))
+    if (!name.trim()) e.name = 'Name is required';
+    if (phone.trim() && !/^[6-9]\d{9}$/.test(phone.trim()))
       e.phone = 'Enter a valid 10-digit mobile number';
     setErrors(e);
     return !e.name && !e.phone;
@@ -120,13 +119,13 @@ export default function EntryScreen() {
 
             <View style={styles.rowDivider} />
 
-            {/* Phone */}
+            {/* Phone (optional) */}
             <View style={styles.formRow}>
               <View style={styles.fieldIcon}>
                 <Ionicons name="call-outline" size={16} color={colors.primaryDark} />
               </View>
               <View style={styles.fieldBody}>
-                <AppText variant="caption" style={styles.fieldLabel}>Mobile Number</AppText>
+                <AppText variant="caption" style={styles.fieldLabel}>Mobile Number (optional)</AppText>
                 <View style={styles.phoneRow}>
                   <AppText variant="body" color={colors.textSecondary}>+91  </AppText>
                   <TextInput
@@ -212,7 +211,7 @@ export default function EntryScreen() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────────────────────────
 
 function FieldError({ msg }: { msg: string }) {
   return (

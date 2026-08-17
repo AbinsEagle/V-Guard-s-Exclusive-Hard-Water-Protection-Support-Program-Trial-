@@ -302,16 +302,17 @@ export default function UnitRegistrationScreen() {
   const handleNativeScan = ({ data: code }: { data: string }) => handleScan(code);
 
   const handleContinue = () => {
+    const digits = cartridgeNum.replace(/\D/g, '');
     const e = { heater: '', cartridge: '', sample: '' };
     if (!heaterSerial.trim())  e.heater    = 'Heater serial number is required';
-    if (!cartridgeNum.trim())  e.cartridge = 'Cartridge number is required';
+    if (!digits)               e.cartridge = 'Cartridge (AS) number is required';
     if (!sampleCollected)      e.sample    = 'Water sample must be collected before proceeding';
     setErrors(e);
     if (e.heater || e.cartridge || e.sample) return;
 
     update({
       heaterSerialNumber:   heaterSerial.trim(),
-      cartridgeNumber:      cartridgeNum.trim(),
+      cartridgeNumber:      digits.padStart(3, '0'),
       waterSampleCollected: sampleCollected,
     });
     router.push('/install/customer-form');
@@ -398,23 +399,24 @@ export default function UnitRegistrationScreen() {
               : null}
           </View>
 
-          {/* ── Cartridge number ── */}
+          {/* ── Cartridge (AS) number ── */}
           <View style={fieldStyles.wrapper}>
             <AppText variant="label" style={fieldStyles.label}>
-              Cartridge No. <AppText variant="label" color={colors.error}>*</AppText>
+              Cartridge No. (AS) <AppText variant="label" color={colors.error}>*</AppText>
             </AppText>
             <View style={[styles.inputBox, errors.cartridge ? styles.inputErr : null]}>
               <Ionicons name="cube-outline" size={18} color={colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="e.g. VG-AS-00123"
+                placeholder="e.g. 001"
                 placeholderTextColor={colors.textHint}
                 value={cartridgeNum}
                 onChangeText={(t) => {
-                  setCartridgeNum(t.toUpperCase());
+                  setCartridgeNum(t.replace(/\D/g, '').slice(0, 3));
                   setErrors((e) => ({ ...e, cartridge: '' }));
                 }}
-                autoCapitalize="characters"
+                keyboardType="number-pad"
+                maxLength={3}
                 returnKeyType="done"
                 onSubmitEditing={handleContinue}
               />
