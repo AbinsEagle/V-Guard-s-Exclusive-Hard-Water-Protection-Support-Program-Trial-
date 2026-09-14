@@ -1,5 +1,8 @@
 import { Text, TextStyle, StyleSheet } from 'react-native';
-import { typography, TypographyVariant } from '../../theme';
+import { typography, TypographyVariant, useColors } from '../../theme';
+
+// Variants that use the dimmer secondary color by default
+const SECONDARY_VARIANTS = new Set<TypographyVariant>(['caption', 'caption2', 'sectionTitle']);
 
 interface AppTextProps {
   variant?: TypographyVariant;
@@ -16,9 +19,16 @@ export function AppText({
   children,
   numberOfLines,
 }: AppTextProps) {
+  const colors = useColors();
+
+  // Derive the correct theme-aware default; explicit color prop always wins
+  const resolvedColor = color ?? (
+    SECONDARY_VARIANTS.has(variant) ? colors.textSecondary : colors.textPrimary
+  );
+
   const textStyle: TextStyle[] = [
     typography[variant],
-    color ? { color } : {},
+    { color: resolvedColor },
     ...(Array.isArray(style) ? style : style ? [style] : []),
   ];
 

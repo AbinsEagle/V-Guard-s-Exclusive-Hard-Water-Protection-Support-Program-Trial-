@@ -8,20 +8,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing } from '../../src/theme';
+import { useColors, spacing } from '../../src/theme';
 import { submitInstallation } from '../../src/services/submission';
 
-const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 export default function ReviewScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data } = useInstallation();
-  const [submitting,   setSubmitting]   = useState(false);
-  const [submitError,  setSubmitError]  = useState('');
+  const [submitting,  setSubmitting]  = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -43,9 +45,9 @@ export default function ReviewScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} disabled={submitting}>
-          <Ionicons name="arrow-back" size={22} color={colors.white} />
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
-        <AppText variant="h3" color={colors.white}>Review & Submit</AppText>
+        <AppText variant="h3" color="#FFFFFF">Review & Submit</AppText>
         <TouchableOpacity
           style={styles.devChip}
           onPress={() => router.push('/dev' as any)}
@@ -55,7 +57,7 @@ export default function ReviewScreen() {
         </TouchableOpacity>
       </View>
 
-      <StepIndicator currentStep={5} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={6} totalSteps={6} labels={STEP_LABELS} />
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
@@ -70,6 +72,42 @@ export default function ReviewScreen() {
           <Row label="Sample Collected" value={data.waterSampleCollected ? 'Yes' : 'No'} />
         </Section>
 
+        {/* Consent */}
+        <Section title="Customer Consent" icon="shield-checkmark" onEdit={() => goTo('/install/consent')}>
+          <Row label="Customer Name" value={data.customerName} />
+          <Row label="WhatsApp" value={data.customerWhatsApp ? `+91 ${data.customerWhatsApp}` : '—'} />
+          <Row label="Pincode" value={data.pincode} />
+          <Row label="Consent Given" value={data.consentGiven ? 'Yes' : 'No'} />
+          {data.consentTimestamp ? (
+            <Row
+              label="Signed At"
+              value={new Date(data.consentTimestamp).toLocaleString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+            />
+          ) : null}
+          {data.consentSignatureUri ? (
+            <View style={styles.signatureThumbWrapper}>
+              <AppText variant="caption" color={colors.textSecondary} style={{ marginBottom: spacing.xs }}>
+                Signature
+              </AppText>
+              {/* @ts-ignore — HTML img element on web */}
+              <img
+                src={data.consentSignatureUri}
+                style={{
+                  width: '100%', height: 240,
+                  objectFit: 'contain', borderRadius: 8,
+                  backgroundColor: '#FAFAFA',
+                  border: '1px solid rgba(60,60,67,0.18)',
+                  display: 'block',
+                } as any}
+                alt="Customer signature"
+              />
+            </View>
+          ) : null}
+        </Section>
+
         {/* Technician */}
         <Section title="Service Person" icon="person-circle" onEdit={() => goTo('/')}>
           <Row label="Name" value={data.technicianName} />
@@ -77,7 +115,7 @@ export default function ReviewScreen() {
         </Section>
 
         {/* Customer */}
-        <Section title="Customer Details" icon="home" onEdit={() => goTo('/install/customer-form')}>
+        <Section title="Water Quality" icon="water" onEdit={() => goTo('/install/customer-form')}>
           <Row label="Name" value={data.customerName} />
           <Row label="WhatsApp" value={`+91 ${data.customerWhatsApp}`} />
           <Row label="Pincode" value={data.pincode} />
@@ -86,7 +124,7 @@ export default function ReviewScreen() {
           <Row label="GPS" value={data.gpsLat ? `${parseFloat(data.gpsLat).toFixed(4)}, ${parseFloat(data.gpsLng).toFixed(4)}` : 'Not captured'} />
           <Row label="Date" value={new Date(data.installationDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} />
           {data.waterQualityFeel ? <Row label="Water Feel" value={data.waterQualityFeel} /> : null}
-          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 7`} /> : null}
+          {data.existingScaleVisualRating ? <Row label="Scale Condition" value={`${data.existingScaleVisualRating} / 5`} /> : null}
         </Section>
 
         {/* Heater Specs */}
@@ -161,11 +199,13 @@ export default function ReviewScreen() {
 function Section({ title, icon, onEdit, children }: {
   title: string; icon: string; onEdit: () => void; children: React.ReactNode;
 }) {
+  const colors = useColors();
+  const secStyles = useMemo(() => createSecStyles(colors), [colors]);
   return (
     <View style={secStyles.wrapper}>
       <TouchableOpacity style={secStyles.titleRow} onPress={onEdit} activeOpacity={0.7}>
         <View style={secStyles.iconBox}>
-          <Ionicons name={icon as any} size={12} color={colors.white} />
+          <Ionicons name={icon as any} size={12} color="#FFFFFF" />
         </View>
         <AppText variant="sectionTitle" color={colors.textSecondary} style={{ flex: 1 }}>
           {title}
@@ -180,15 +220,18 @@ function Section({ title, icon, onEdit, children }: {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const colors = useColors();
   return (
     <View style={rowStyles.row}>
       <AppText variant="caption" color={colors.textSecondary} style={rowStyles.label}>{label}</AppText>
-      <AppText variant="body" style={rowStyles.value}>{value || '—'}</AppText>
+      <AppText variant="body" color={colors.textPrimary} style={rowStyles.value}>{value || '—'}</AppText>
     </View>
   );
 }
 
 function PhotoThumb({ label, uri }: { label: string; uri: string | null }) {
+  const colors = useColors();
+  const thumbStyles = useMemo(() => createThumbStyles(colors), [colors]);
   return (
     <View style={thumbStyles.wrapper}>
       {uri
@@ -206,72 +249,79 @@ function PhotoThumb({ label, uri }: { label: string; uri: string | null }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.headerBg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.headerBg,
-  },
-  backBtn: { padding: spacing.xs },
-  devChip: {
-    paddingHorizontal: spacing.sm, paddingVertical: 4,
-    borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  body: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm,
-  },
-  editHint: { textAlign: 'center', marginBottom: spacing.xs },
-  photosRow: { flexDirection: 'row', gap: spacing.md },
-  submitBtn: {
-    flexDirection: 'row', backgroundColor: colors.success,
-    borderRadius: 14, paddingVertical: spacing.md + 2,
-    alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
-  },
-  submitBtnDisabled: { opacity: 0.6 },
-  errorBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs,
-    backgroundColor: colors.errorLight,
-    borderRadius: 10, padding: spacing.sm,
-    borderWidth: 1, borderColor: colors.error,
-  },
-  disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
-});
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.headerBg },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+      backgroundColor: colors.headerBg,
+    },
+    backBtn: { padding: spacing.xs },
+    devChip: {
+      paddingHorizontal: spacing.sm, paddingVertical: 4,
+      borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    },
+    body: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm,
+    },
+    editHint: { textAlign: 'center', marginBottom: spacing.xs },
+    signatureThumbWrapper: { marginTop: spacing.xs },
+    photosRow: { flexDirection: 'row', gap: spacing.md },
+    submitBtn: {
+      flexDirection: 'row', backgroundColor: colors.success,
+      borderRadius: 14, paddingVertical: spacing.md + 2,
+      alignItems: 'center', justifyContent: 'center', marginTop: spacing.md,
+    },
+    submitBtnDisabled: { opacity: 0.6 },
+    errorBanner: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs,
+      backgroundColor: colors.errorLight,
+      borderRadius: 10, padding: spacing.sm,
+      borderWidth: 1, borderColor: colors.error,
+    },
+    disclaimer: { textAlign: 'center', lineHeight: 18, marginBottom: spacing.md },
+  });
+}
 
-const secStyles = StyleSheet.create({
-  wrapper: { gap: spacing.xs },
-  titleRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  iconBox: {
-    width: 20, height: 20, borderRadius: 5,
-    backgroundColor: colors.headerBg,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.border,
-    gap: spacing.xs,
-  },
-});
+function createSecStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    wrapper: { gap: spacing.xs },
+    titleRow: {
+      flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+      marginTop: spacing.sm,
+    },
+    iconBox: {
+      width: 20, height: 20, borderRadius: 5,
+      backgroundColor: colors.headerBg,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 14, padding: spacing.md,
+      borderWidth: 1, borderColor: colors.border,
+      gap: spacing.xs,
+    },
+  });
+}
 
 const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 3 },
+  row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 3 },
   label: { flex: 1 },
   value: { flex: 2, textAlign: 'right', flexWrap: 'wrap' },
 });
 
-const thumbStyles = StyleSheet.create({
-  wrapper: { flex: 1, gap: spacing.xs },
-  image: { width: '100%', height: 120, borderRadius: 10 },
-  placeholder: {
-    width: '100%', height: 120, borderRadius: 10,
-    backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  label: { textAlign: 'center' },
-});
+function createThumbStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    wrapper: { flex: 1, gap: spacing.xs },
+    image:   { width: '100%', height: 120, borderRadius: 10 },
+    placeholder: {
+      width: '100%', height: 120, borderRadius: 10,
+      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    label: { textAlign: 'center' },
+  });
+}

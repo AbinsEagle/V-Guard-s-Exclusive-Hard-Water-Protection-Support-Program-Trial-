@@ -4,18 +4,20 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
-import { colors, spacing, radius, shadows } from '../../src/theme';
+import { useColors, spacing, radius, shadows } from '../../src/theme';
 
-const STEP_LABELS = ['Technician', 'Units', 'Customer', 'Photos', 'Review'];
+const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
 type PhotoSlot = 'front' | 'side' | 'scale';
 
@@ -26,18 +28,54 @@ interface PhotoState {
 }
 
 const CAMERA_LABELS: Record<PhotoSlot, string> = {
-  front: 'Front View',
-  side:  'Side View',
-  scale: 'Existing Scale',
+  front: 'Cartridge — Front',
+  side:  'Cartridge — Side',
+  scale: 'Scale Condition',
 };
 
 const CAMERA_GUIDES: Record<PhotoSlot, string> = {
-  front: 'Capture anti-scalant unit — front face',
-  side:  'Capture anti-scalant unit — side profile',
-  scale: 'Capture scale buildup on tap / showerhead',
+  front: 'Capture installed cartridge — front face',
+  side:  'Capture installed cartridge — side profile',
+  scale: 'Capture scale buildup — bathroom tiles, pipes, washbasin, taps, etc.',
 };
 
+// Camera overlay is always dark regardless of app theme
+const cameraStyles = StyleSheet.create({
+  cameraScreen:  { flex: 1, backgroundColor: '#000' },
+  camera:        { flex: 1 },
+  cameraOverlay: { flex: 1, justifyContent: 'space-between' },
+  cameraHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  cameraBack:  { padding: spacing.xs },
+  cameraBadge: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
+    borderRadius: 20,
+  },
+  cameraGuide: { alignItems: 'center', padding: spacing.md },
+  cameraGuideText: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
+    borderRadius: 20, textAlign: 'center',
+  },
+  cameraControls: { alignItems: 'center', paddingBottom: spacing.xl },
+  captureBtn: {
+    width: 72, height: 72, borderRadius: 36,
+    borderWidth: 3, borderColor: '#FFFFFF',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  captureBtnInner: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+  },
+});
+
 export default function PhotosScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data, update } = useInstallation();
   const [permission, requestPermission] = useCameraPermissions();
   const [photos, setPhotos] = useState<PhotoState>({
@@ -49,9 +87,12 @@ export default function PhotosScreen() {
   const cameraRef = useRef<CameraView>(null);
 
   const openCamera = async (slot: PhotoSlot) => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) return;
+    // On web the browser handles the permission prompt inside getUserMedia
+    if (Platform.OS !== 'web') {
+      if (!permission?.granted) {
+        const result = await requestPermission();
+        if (!result.granted) return;
+      }
     }
     setActiveSlot(slot);
   };
@@ -81,83 +122,102 @@ export default function PhotosScreen() {
   const requiredCaptured = !!(photos.front && photos.side && photos.scale);
 
   // ── Full-screen camera ──
-  if (activeSlot && permission?.granted) {
-    return (
-      <View style={styles.cameraScreen}>
-        <CameraView ref={cameraRef} style={styles.camera} facing="back" type={"back" as any}>
-          <SafeAreaView style={styles.cameraOverlay} edges={['top', 'bottom']}>
-            <View style={styles.cameraHeader}>
-              <TouchableOpacity onPress={() => setActiveSlot(null)} style={styles.cameraBack}>
-                <Ionicons name="close" size={26} color={colors.white} />
-              </TouchableOpacity>
-              <View style={styles.cameraBadge}>
-                <Ionicons name="camera" size={13} color={colors.white} />
-                <AppText variant="label" color={colors.white} style={{ marginLeft: 6 }}>
-                  {CAMERA_LABELS[activeSlot]}
+  if (activeSlot) {
+    // Web: use native getUserMedia + <video> element — expo-camera is unreliable on web browsers
+    if (Platform.OS === 'web') {
+      return (
+        <WebCamera
+          slot={activeSlot}
+          onCapture={(uri) => {
+            setPhotos((prev) => ({ ...prev, [activeSlot!]: uri }));
+            setActiveSlot(null);
+          }}
+          onClose={() => setActiveSlot(null)}
+        />
+      );
+    }
+
+    // Native: expo-camera CameraView
+    if (permission?.granted) {
+      return (
+        <View style={cameraStyles.cameraScreen}>
+          <CameraView ref={cameraRef} style={cameraStyles.camera} facing="back" type={"back" as any}>
+            <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+              <View style={cameraStyles.cameraHeader}>
+                <TouchableOpacity onPress={() => setActiveSlot(null)} style={cameraStyles.cameraBack}>
+                  <Ionicons name="close" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={cameraStyles.cameraBadge}>
+                  <Ionicons name="camera" size={13} color="#FFFFFF" />
+                  <AppText variant="label" color="#FFFFFF" style={{ marginLeft: 6 }}>
+                    {CAMERA_LABELS[activeSlot]}
+                  </AppText>
+                </View>
+                <View style={{ width: 40 }} />
+              </View>
+              <View style={cameraStyles.cameraGuide}>
+                <AppText variant="caption" color="#FFFFFF" style={cameraStyles.cameraGuideText}>
+                  {CAMERA_GUIDES[activeSlot]}
                 </AppText>
               </View>
-              <View style={{ width: 40 }} />
-            </View>
-            <View style={styles.cameraGuide}>
-              <AppText variant="caption" color={colors.white} style={styles.cameraGuideText}>
-                {CAMERA_GUIDES[activeSlot]}
-              </AppText>
-            </View>
-            <View style={styles.cameraControls}>
-              <TouchableOpacity style={styles.captureBtn} onPress={takePhoto}>
-                <View style={styles.captureBtnInner} />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </CameraView>
-      </View>
-    );
+              <View style={cameraStyles.cameraControls}>
+                <TouchableOpacity style={cameraStyles.captureBtn} onPress={takePhoto}>
+                  <View style={cameraStyles.captureBtnInner} />
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </CameraView>
+        </View>
+      );
+    }
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={colors.white} />
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
-        <AppText variant="h3" color={colors.white}>Installation Photos</AppText>
+        <AppText variant="h3" color="#FFFFFF">Installation Photos</AppText>
         <View style={{ width: 38 }} />
       </View>
 
-      <StepIndicator currentStep={4} totalSteps={5} labels={STEP_LABELS} />
+      <StepIndicator currentStep={5} totalSteps={6} labels={STEP_LABELS} />
 
       <ScrollView
         style={styles.scrollArea}
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        {/* Row 1: front + side */}
+        {/* Section 1: Cartridge Installed Condition */}
+        <SectionHeader icon="hardware-chip-outline" title="Cartridge Installed Condition" />
         <View style={styles.photoRow}>
           <PhotoCard
             slot="front"
-            label="Front View"
-            hint="Face of unit"
+            label="Cartridge — Front"
+            hint="Front face of cartridge"
             photoUri={photos.front}
             onCapture={() => openCamera('front')}
             onRetake={() => openCamera('front')}
           />
           <PhotoCard
             slot="side"
-            label="Side View"
-            hint="Side profile"
+            label="Cartridge — Side"
+            hint="Side profile of cartridge"
             photoUri={photos.side}
             onCapture={() => openCamera('side')}
             onRetake={() => openCamera('side')}
           />
         </View>
 
-        {/* Row 2: scale baseline (required) */}
+        {/* Section 2: Existing Scale */}
+        <SectionHeader icon="water-outline" title="Existing Scale" />
         <View style={styles.scaleRow}>
           <View style={styles.scaleCardWrapper}>
             <PhotoCard
               slot="scale"
-              label="Existing Scale"
-              hint="Tap / showerhead"
+              label="Scale Condition"
+              hint="Tiles / pipes / washbasin / taps"
               photoUri={photos.scale}
               onCapture={() => openCamera('scale')}
               onRetake={() => openCamera('scale')}
@@ -186,12 +246,162 @@ export default function PhotosScreen() {
         >
           <AppText variant="label" color={colors.headerBg}>Review & Submit</AppText>
           <View style={styles.btnArrow}>
-            <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// ─── Web Camera (getUserMedia) ────────────────────────────────────────────────
+// expo-camera's CameraView is unreliable on web — video stream doesn't attach
+// consistently. This component uses raw browser APIs to guarantee a live preview.
+
+function WebCamera({ slot, onCapture, onClose }: {
+  slot: PhotoSlot;
+  onCapture: (uri: string) => void;
+  onClose: () => void;
+}) {
+  const videoRef  = useRef<any>(null);
+  const streamRef = useRef<any>(null);
+  const [status, setStatus] = useState<'starting' | 'ready' | 'error'>('starting');
+  const [errMsg,  setErrMsg]  = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      let stream: any;
+      try {
+        stream = await (navigator as any).mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
+      } catch {
+        if (!cancelled) {
+          setStatus('error');
+          setErrMsg('Camera access denied. Allow camera permission in your browser and try again.');
+        }
+        return;
+      }
+      if (cancelled) { stream.getTracks().forEach((t: any) => t.stop()); return; }
+      streamRef.current = stream;
+
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        // Wait for stream to actually start playing before showing the UI
+        await new Promise<void>((resolve) => {
+          if (video.readyState >= 3) { resolve(); return; }
+          video.oncanplay = () => resolve();
+        });
+      }
+      if (cancelled) return;
+      setStatus('ready');
+    })();
+
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t: any) => t.stop());
+    };
+  }, []);
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
+    const canvas = (document as any).createElement('canvas');
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    onCapture(canvas.toDataURL('image/jpeg', 0.85));
+  };
+
+  return (
+    <View style={cameraStyles.cameraScreen}>
+      {/* @ts-ignore — valid HTML element on web */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' } as any}
+      />
+      <SafeAreaView style={cameraStyles.cameraOverlay} edges={['top', 'bottom']}>
+        <View style={cameraStyles.cameraHeader}>
+          <TouchableOpacity onPress={onClose} style={cameraStyles.cameraBack}>
+            <Ionicons name="close" size={26} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={cameraStyles.cameraBadge}>
+            <Ionicons name="camera" size={13} color="#FFFFFF" />
+            <AppText variant="label" color="#FFFFFF" style={{ marginLeft: 6 }}>
+              {CAMERA_LABELS[slot]}
+            </AppText>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <View style={cameraStyles.cameraGuide}>
+          {status === 'starting' && (
+            <>
+              <ActivityIndicator color="#FFFFFF" size="large" />
+              <AppText variant="caption" color="#FFFFFF" style={{ marginTop: 10 }}>
+                Starting camera…
+              </AppText>
+            </>
+          )}
+          {status === 'error' && (
+            <>
+              <Ionicons name="camera-outline" size={36} color="#FF3B30" />
+              <AppText variant="caption" color="#FFFFFF" style={{ marginTop: 10, textAlign: 'center' }}>
+                {errMsg}
+              </AppText>
+            </>
+          )}
+          {status === 'ready' && (
+            <AppText variant="caption" color="#FFFFFF" style={cameraStyles.cameraGuideText}>
+              {CAMERA_GUIDES[slot]}
+            </AppText>
+          )}
+        </View>
+
+        <View style={cameraStyles.cameraControls}>
+          <TouchableOpacity
+            style={[cameraStyles.captureBtn, status !== 'ready' && { opacity: 0.35 }]}
+            onPress={handleCapture}
+            disabled={status !== 'ready'}
+          >
+            <View style={cameraStyles.captureBtnInner} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+// ─── Section Header ───────────────────────────────────────────────────────────
+
+function SectionHeader({ icon, title }: { icon: string; title: string }) {
+  const colors = useColors();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs }}>
+      <View style={{
+        width: 26, height: 26, borderRadius: 7,
+        backgroundColor: colors.headerBg,
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Ionicons name={icon as any} size={14} color="#FFFFFF" />
+      </View>
+      <AppText variant="label" color={colors.textPrimary} style={{ fontWeight: '700' }}>
+        {title}
+      </AppText>
+    </View>
   );
 }
 
@@ -207,6 +417,8 @@ function PhotoCard({
   onCapture: () => void;
   onRetake: () => void;
 }) {
+  const colors = useColors();
+  const cardStyles = useMemo(() => createCardStyles(colors), [colors]);
   return (
     <View style={cardStyles.card}>
       <View style={cardStyles.header}>
@@ -225,8 +437,8 @@ function PhotoCard({
         <View style={cardStyles.previewWrapper}>
           <Image source={{ uri: photoUri }} style={cardStyles.preview} resizeMode="cover" />
           <TouchableOpacity style={cardStyles.retakeBtn} onPress={onRetake}>
-            <Ionicons name="camera-reverse-outline" size={14} color={colors.white} />
-            <AppText variant="caption2" color={colors.white} style={{ marginLeft: 3 }}>Retake</AppText>
+            <Ionicons name="camera-reverse-outline" size={14} color="#FFFFFF" />
+            <AppText variant="caption2" color="#FFFFFF" style={{ marginLeft: 3 }}>Retake</AppText>
           </TouchableOpacity>
         </View>
       ) : (
@@ -245,6 +457,7 @@ function PhotoCard({
 }
 
 function StatusDot({ captured, label, optional }: { captured: boolean; label: string; optional?: boolean }) {
+  const colors = useColors();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
       <View style={{
@@ -262,116 +475,88 @@ function StatusDot({ captured, label, optional }: { captured: boolean; label: st
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.headerBg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    backgroundColor: colors.headerBg,
-  },
-  backBtn: { padding: spacing.xs },
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.headerBg },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+      backgroundColor: colors.headerBg,
+    },
+    backBtn: { padding: spacing.xs },
 
-  scrollArea: { flex: 1, backgroundColor: colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  body: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.md,
-  },
-  photoRow:  { flexDirection: 'row', gap: spacing.md, height: 220 },
+    scrollArea: { flex: 1, backgroundColor: colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+    body: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: spacing.md,
+    },
+    photoRow: { flexDirection: 'row', gap: spacing.md, height: 220 },
 
-  scaleRow: { flexDirection: 'row' },
-  scaleCardWrapper: { width: '48%', height: 160 },
+    scaleRow: { flexDirection: 'row' },
+    scaleCardWrapper: { width: '48%', height: 160 },
 
-  statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
-  statusHint: { marginLeft: 'auto' },
+    statusRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
+    statusHint: { marginLeft: 'auto' },
 
-  primaryBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg, paddingVertical: spacing.md,
-    ...shadows.sm,
-  },
-  primaryBtnDisabled: { opacity: 0.4 },
-  btnArrow: {
-    marginLeft: spacing.md,
-    backgroundColor: colors.primaryDark,
-    width: 26, height: 26, borderRadius: 13,
-    alignItems: 'center', justifyContent: 'center',
-  },
+    primaryBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: radius.lg, paddingVertical: spacing.md,
+      ...shadows.sm,
+    },
+    primaryBtnDisabled: { opacity: 0.4 },
+    btnArrow: {
+      marginLeft: spacing.md,
+      backgroundColor: colors.primaryDark,
+      width: 26, height: 26, borderRadius: 13,
+      alignItems: 'center', justifyContent: 'center',
+    },
+  });
+}
 
-  // Camera
-  cameraScreen:    { flex: 1, backgroundColor: '#000' },
-  camera:          { flex: 1 },
-  cameraOverlay:   { flex: 1, justifyContent: 'space-between' },
-  cameraHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: spacing.md,
-  },
-  cameraBack:  { padding: spacing.xs },
-  cameraBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
-    borderRadius: 20,
-  },
-  cameraGuide: { alignItems: 'center', padding: spacing.md },
-  cameraGuideText: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
-    borderRadius: 20, textAlign: 'center',
-  },
-  cameraControls: { alignItems: 'center', paddingBottom: spacing.xl },
-  captureBtn: {
-    width: 72, height: 72, borderRadius: 36,
-    borderWidth: 3, borderColor: colors.white,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  captureBtnInner: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: colors.white,
-  },
-});
+function createCardStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    card: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.sm,
+      borderWidth: 1, borderColor: colors.border,
+      gap: spacing.xs,
+    },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
+    labelBadge: {
+      backgroundColor: colors.primaryFaint,
+      paddingHorizontal: spacing.sm, paddingVertical: 2,
+      borderRadius: 6,
+      borderWidth: 1, borderColor: 'rgba(196,122,0,0.20)',
+    },
+    labelText: { fontWeight: '700' },
 
-const cardStyles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.sm,
-    borderWidth: 1, borderColor: colors.border,
-    gap: spacing.xs,
-  },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  labelBadge: {
-    backgroundColor: colors.primaryFaint,
-    paddingHorizontal: spacing.sm, paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1, borderColor: 'rgba(196,122,0,0.20)',
-  },
-  labelText: { fontWeight: '700' },
+    captureArea: {
+      flex: 1,
+      borderRadius: radius.md,
+      borderWidth: 1.5, borderColor: colors.borderOpaque,
+      borderStyle: 'dashed',
+      backgroundColor: colors.background,
+      alignItems: 'center', justifyContent: 'center',
+      minHeight: 80,
+      gap: 2,
+    },
+    tapLabel: { fontWeight: '600', marginTop: 2 },
 
-  captureArea: {
-    flex: 1,
-    borderRadius: radius.md,
-    borderWidth: 1.5, borderColor: colors.borderOpaque,
-    borderStyle: 'dashed',
-    backgroundColor: colors.background,
-    alignItems: 'center', justifyContent: 'center',
-    minHeight: 80,
-    gap: 2,
-  },
-  tapLabel: { fontWeight: '600', marginTop: 2 },
-
-  previewWrapper: { flex: 1, position: 'relative', minHeight: 80 },
-  preview: { flex: 1, borderRadius: radius.md },
-  retakeBtn: {
-    position: 'absolute', bottom: spacing.xs, right: spacing.xs,
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    paddingHorizontal: spacing.xs + 2, paddingVertical: 3,
-    borderRadius: radius.sm,
-  },
-});
+    previewWrapper: { flex: 1, position: 'relative', minHeight: 80 },
+    preview: { flex: 1, borderRadius: radius.md },
+    retakeBtn: {
+      position: 'absolute', bottom: spacing.xs, right: spacing.xs,
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.65)',
+      paddingHorizontal: spacing.xs + 2, paddingVertical: 3,
+      borderRadius: radius.sm,
+    },
+  });
+}

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../theme';
+import { useColors, radius, spacing } from '../../theme';
 import { AppText } from './AppText';
 
 interface StepIndicatorProps {
@@ -10,6 +10,9 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ currentStep, totalSteps, labels }: StepIndicatorProps) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       {Array.from({ length: totalSteps }, (_, i) => {
@@ -62,53 +65,55 @@ export function StepIndicator({ currentStep, totalSteps, labels }: StepIndicator
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection:   'row',
-    alignItems:      'flex-start',
-    justifyContent:  'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical:   spacing.md,
-    backgroundColor:   colors.background,
-  },
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: {
+      flexDirection:     'row',
+      alignItems:        'flex-start',
+      justifyContent:    'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical:   spacing.md,
+      backgroundColor:   colors.background,
+    },
 
-  stepWrapper: { alignItems: 'center', width: 48 },
+    stepWrapper: { alignItems: 'center', width: 48 },
 
-  circle: {
-    width:           26,
-    height:          26,
-    borderRadius:    13,
-    backgroundColor: colors.fillTertiary,
-    borderWidth:     1.5,
-    borderColor:     colors.borderOpaque,
-    alignItems:      'center',
-    justifyContent:  'center',
-  },
-  circleActive: {
-    backgroundColor: colors.primary,
-    borderColor:     colors.primary,
-  },
-  circleCompleted: {
-    backgroundColor: colors.success,
-    borderColor:     colors.success,
-  },
+    circle: {
+      width:           26,
+      height:          26,
+      borderRadius:    13,
+      backgroundColor: colors.fillTertiary,
+      borderWidth:     1.5,
+      borderColor:     colors.borderOpaque,
+      alignItems:      'center',
+      justifyContent:  'center',
+    },
+    circleActive: {
+      backgroundColor: colors.primary,
+      borderColor:     colors.primary,
+    },
+    circleCompleted: {
+      backgroundColor: colors.success,
+      borderColor:     colors.success,
+    },
 
-  tick:    { fontWeight: '700', fontSize: 11 },
-  stepNum: { fontWeight: '600' },
+    tick:    { fontWeight: '700', fontSize: 11 },
+    stepNum: { fontWeight: '600' },
 
-  line: {
-    flex:            1,
-    height:          1.5,
-    backgroundColor: colors.borderOpaque,
-    marginTop:       12,
-  },
-  lineCompleted: { backgroundColor: colors.success },
+    line: {
+      flex:            1,
+      height:          1.5,
+      backgroundColor: colors.borderOpaque,
+      marginTop:       12,
+    },
+    lineCompleted: { backgroundColor: colors.success },
 
-  label: {
-    marginTop:  4,
-    fontSize:   10,
-    textAlign:  'center',
-    letterSpacing: 0,
-  },
-  labelActive: { color: colors.primary, fontWeight: '600' },
-});
+    label: {
+      marginTop:     4,
+      fontSize:      10,
+      textAlign:     'center',
+      letterSpacing: 0,
+    },
+    labelActive: { color: colors.primary, fontWeight: '600' },
+  });
+}

@@ -1,5 +1,5 @@
-export { colors, fontFamily }    from './colors';
-export type { ColorKey }         from './colors';
+export { colors, lightColors, darkColors, fontFamily, useColors } from './colors';
+export type { ColorKey } from './colors';
 
 export { spacing, radius }       from './spacing';
 export type { SpacingKey, RadiusKey } from './spacing';

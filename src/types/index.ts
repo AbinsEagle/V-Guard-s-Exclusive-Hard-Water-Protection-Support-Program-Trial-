@@ -27,6 +27,12 @@ export interface InstallationData {
   cartridgeBatchCode: string;
   waterSampleCollected: boolean;
 
+  // Step 3 — Consent
+  consentSignatureUri: string | null;    // full consent document PNG (shared with customer)
+  consentRawSignatureUri: string | null; // raw canvas signature — used to regenerate doc after units step
+  consentGiven: boolean;
+  consentTimestamp: string;
+
   // Step 3 — Customer details
   customerName: string;
   customerWhatsApp: string;
@@ -91,6 +97,10 @@ export const EMPTY_INSTALLATION: InstallationData = {
   frontPhotoUri: null,
   sidePhotoUri: null,
   scalePhotoUri: null,
+  consentSignatureUri: null,
+  consentRawSignatureUri: null,
+  consentGiven: false,
+  consentTimestamp: '',
 };
 
 // ─── Survey ───────────────────────────────────────────────────────────────────
