@@ -49,9 +49,10 @@ export default function ConsentScreen() {
     customerName: '', whatsApp: '', pincode: '', signature: '', confirmed: '',
   });
 
-  const canvasRef    = useRef<any>(null);
-  const isDrawingRef = useRef(false);
-  const lastPtRef    = useRef<{ x: number; y: number } | null>(null);
+  const canvasRef      = useRef<any>(null);
+  const isDrawingRef   = useRef(false);
+  const lastPtRef      = useRef<{ x: number; y: number } | null>(null);
+  const hasDrawnRef    = useRef(false);   // true only if user drew on canvas this session
 
   // Convert CSS pointer coords to canvas internal coordinates
   function getCanvasPoint(e: any): { x: number; y: number } {
@@ -73,6 +74,7 @@ export default function ConsentScreen() {
     ctx.arc(pt.x, pt.y, 1.2, 0, Math.PI * 2);
     ctx.fillStyle = '#1A1A1A';
     ctx.fill();
+    hasDrawnRef.current = true;
     setHasSignature(true);
     setErrors((prev) => ({ ...prev, signature: '' }));
   }, []);
@@ -103,6 +105,7 @@ export default function ConsentScreen() {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    hasDrawnRef.current = false;
     setHasSignature(false);
   };
 
@@ -122,10 +125,11 @@ export default function ConsentScreen() {
   const handleContinue = async () => {
     if (!validate()) return;
     setGenerating(true);
-    // If user re-signed on this visit, capture from canvas; otherwise keep existing doc
-    const rawSig = hasSignature && !data.consentGiven
+    // Use canvas capture only when the user actually drew this session;
+    // otherwise preserve the previously stored raw signature (returning user).
+    const rawSig = hasDrawnRef.current
       ? (canvasRef.current?.toDataURL('image/png') ?? null)
-      : (canvasRef.current?.toDataURL('image/png') ?? null);
+      : (data.consentRawSignatureUri ?? null);
     const timestamp = new Date().toISOString();
     const docUri  = await generateConsentDocument({
       customerName:     customerName.trim(),
