@@ -15,7 +15,6 @@ import { AppText } from '../../src/components/common/AppText';
 import { StepIndicator } from '../../src/components/common/StepIndicator';
 import { useInstallation } from '../../src/store/installationStore';
 import { useColors, spacing, radius, shadows } from '../../src/theme';
-import { generateConsentDocument } from '../../src/utils/generateConsentDocument';
 
 const STEP_LABELS = ['Technician', 'Consent', 'Units', 'Details', 'Photos', 'Review'];
 
@@ -44,7 +43,6 @@ export default function ConsentScreen() {
   // If consent was already given, treat signature as captured without redrawing
   const [hasSignature, setHasSignature] = useState(data.consentGiven || false);
   const [confirmed,    setConfirmed]    = useState(data.consentGiven || false);
-  const [generating,   setGenerating]   = useState(false);
   const [errors,       setErrors]       = useState({
     customerName: '', whatsApp: '', pincode: '', signature: '', confirmed: '',
   });
@@ -122,31 +120,23 @@ export default function ConsentScreen() {
     return Object.values(e).every((v) => !v);
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!validate()) return;
-    setGenerating(true);
-    // Use canvas capture only when the user actually drew this session;
-    // otherwise preserve the previously stored raw signature (returning user).
+    // Capture raw signature only if the user actually drew this session;
+    // otherwise keep the stored signature (returning user who hasn't re-signed).
     const rawSig = hasDrawnRef.current
       ? (canvasRef.current?.toDataURL('image/png') ?? null)
       : (data.consentRawSignatureUri ?? null);
     const timestamp = new Date().toISOString();
-    const docUri  = await generateConsentDocument({
-      customerName:     customerName.trim(),
-      whatsApp:         whatsApp.trim(),
-      pincode:          pincode.trim(),
-      timestamp,
-      signatureDataUri: rawSig,
-      heaterSerial:     data.heaterSerialNumber || undefined,
-      cartridgeNumber:  data.cartridgeNumber    || undefined,
-    });
-    setGenerating(false);
+    // Store raw signature now; the full formatted consent document (with heater
+    // serial and cartridge number) is generated in the next step (scan-heater)
+    // once those values are known.
     update({
       customerName:           customerName.trim(),
       customerWhatsApp:       whatsApp.trim(),
       pincode:                pincode.trim(),
-      consentSignatureUri:    docUri || rawSig,
-      consentRawSignatureUri: rawSig,         // preserved so scan-heater can regenerate with heater/cartridge data
+      consentSignatureUri:    rawSig,   // placeholder; overwritten by scan-heater
+      consentRawSignatureUri: rawSig,
       consentGiven:           true,
       consentTimestamp:       timestamp,
     });
@@ -378,19 +368,14 @@ export default function ConsentScreen() {
 
           {/* CTA */}
           <TouchableOpacity
-            style={[styles.primaryBtn, generating && { opacity: 0.7 }]}
+            style={styles.primaryBtn}
             onPress={handleContinue}
-            disabled={generating}
             activeOpacity={0.85}
           >
-            <AppText variant="label" color={colors.headerBg}>
-              {generating ? 'Generating document…' : 'Proceed to Customer Details'}
-            </AppText>
-            {!generating && (
-              <View style={styles.btnArrow}>
-                <Ionicons name="arrow-forward" size={16} color={colors.white} />
-              </View>
-            )}
+            <AppText variant="label" color={colors.headerBg}>Proceed to Customer Details</AppText>
+            <View style={styles.btnArrow}>
+              <Ionicons name="arrow-forward" size={16} color={colors.white} />
+            </View>
           </TouchableOpacity>
 
         </ScrollView>
