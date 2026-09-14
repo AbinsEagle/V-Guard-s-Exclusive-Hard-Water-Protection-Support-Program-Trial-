@@ -329,7 +329,7 @@ export default function UnitRegistrationScreen() {
     if (e.heater || e.cartridge || e.sample) return;
 
     const newSerial    = heaterSerial.trim();
-    const newCartridge = cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim() : '';
+    const newCartridge = cartridgeNum.trim() ? 'AS-' + cartridgeNum.trim().padStart(3, '0') : '';
 
     update({
       heaterSerialNumber:   newSerial,
@@ -449,11 +449,11 @@ export default function UnitRegistrationScreen() {
               <View style={styles.prefixDiv} />
               <TextInput
                 style={styles.input}
-                placeholder="0001"
+                placeholder="001"
                 placeholderTextColor={colors.textHint}
                 value={cartridgeNum}
                 onChangeText={(t) => {
-                  setCartridgeNum(t.replace(/\D/g, '').slice(0, 4));
+                  setCartridgeNum(t.replace(/\D/g, '').slice(0, 3));
                   setErrors((e) => ({ ...e, cartridge: '' }));
                 }}
                 autoCapitalize="characters"
